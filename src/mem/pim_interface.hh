@@ -116,10 +116,18 @@ class PIMInterface : public DRAMInterface
     bool pim_mode;         // PIM mode enabled/disabled
     bool single_bank_mode; // single bank mode enabled/disabled
 
+    /*
+     * Start address of the PIM memory region
+     */
+    const Addr pim_range_start;
+
     SIMD_vector *getVector(Operand op_type, int24_t op_idx);
+    PIMInstruction format_instruction(uint32_t raw_instr);
+    void executeKernel(PacketPtr pkt);
 
   public:
     PIMInterface(const PIMInterfaceParams &_p);
+    void access(PacketPtr pkt) override;
 };
 
 } // namespace memory
