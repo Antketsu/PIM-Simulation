@@ -21,21 +21,20 @@ PIMInterface::PIMInterface(const PIMInterfaceParams &_p)
       pim_range_start(_p.pim_range_start())
 {}
 
-PIMInterface::SIMD_vector *
-PIMInterface::getVector(Operand op_type, int24_t op_idx)
+uint16_t *
+PIMInterface::getVector(Operand op_type, int24_t op_idx, PacketPtr pkt)
 {
     switch (op_type) {
         case GRF_A:
-            return &grf_a[op_idx];
+            return &(grf_a[op_idx][0]);
         case GRF_B:
-            return &grf_b[op_idx];
+            return &(grf_b[op_idx][0]);
         case SRF_M:
-            return &srf_m[op_idx];
+            return &(srf_m[op_idx][0]);
         case SRF_A:
-            return &srf_a[op_idx];
+            return &(srf_a[op_idx][0]);
         case BANK:
-            // TODO: implement BANK operand fetch
-            break;
+            return (uint16_t *)toHostAddr(pkt->getAddr());
         default:
             panic("Unknown operand type %d for getVector\n", op_type);
     }
@@ -131,7 +130,7 @@ PIMInterface::executeKernel(PacketPtr pkt)
     }
     while (pim_mode) {
         PIMInstruction &instr = crf[pc];
-        instr.exec();
+        instr.exec(pkt);
     }
 }
 
@@ -145,7 +144,7 @@ PIMInterface::ControlInstruction::ControlInstruction(PIMInstructionType _type,
     : PIMInstruction(_type), imm0(_imm0), imm1(_imm1)
 {}
 
-PIMInterface::ControlInstruction::exec()
+PIMInterface::ControlInstruction::exec(PacketPtr pkt)
 {
     switch (type) {
         case NOP:
@@ -175,7 +174,7 @@ PIMInterface::DataInstruction::DataInstruction(
       do_relu(_do_relu)
 {}
 
-PIMInterface::DataInstruction::exec()
+PIMInterface::DataInstruction::exec(PacketPtr pkt)
 {
     switch (type) {
         case MOV:
@@ -208,38 +207,38 @@ PIMInterface::ALUInstruction::ALUInstruction(PIMInstructionType _type,
       src1_idx(_src1_idx),
 {}
 
-PIMInterface::ALUInstruction::exec()
+PIMInterface::ALUInstruction::exec(PacketPtr pkt)
 {
-    SIMD_vector *op0_vector = getVector(src0, src0_idx);
-    SIMD_vector *op1_vector = getVector(src1, src1_idx);
-    SIMD_vector *dest_vector = getVector(dest, dest_idx);
+    uint16_t *op0_vector = getVector(src0, src0_idx);
+    uint16_t *op1_vector = getVector(src1, src1_idx);
+    uint16_t *dest_vector = getVector(dest, dest_idx);
     switch (type) {
         case ADD:
             assert(dest == GRF_A || dest == GRF_B);
             for (int i = 0; i < simd_width; ++i) {
-                dest_vector->at(i) = op0_vector->at(i) + op1_vector->at(i);
+                dest_vector[i] = op0_vector[i] + op1_vector[i];
             }
             break;
         case MUL:
             assert(dest == GRF_A || dest == GRF_B);
             assert(src0 != SRF_M);
             for (int i = 0; i < simd_width; ++i) {
-                dest_vector->at(i) = op0_vector->at(i) * op1_vector->at(i);
+                dest_vector[i] = op0_vector[i] * op1_vector[i];
             }
             break;
         case MAC:
             assert(dest == GRF_B);
             for (int i = 0; i < simd_width; ++i) {
-                dest_vector->at(i) += op0_vector->at(i) * op1_vector->at(i);
+                dest_vector[i] += op0_vector[i] * op1_vector[i];
             }
             break;
         case MAD:
             assert(dest == GRF_A || dest == GRF_B);
             SIMD_vector *op2_vector =
-                getVector(src2, src1_idx); // src2 uses src1_idx
+                getVector(src2, src1_idx, pkt); // src2 uses src1_idx
             for (int i = 0; i < simd_width; ++i) {
-                dest_vector->at(i) =
-                    op0_vector->at(i) * op1_vector->at(i) + op2_vector->at(i);
+                dest_vector[i] =
+                    op0_vector[i] * op1_vector[i] + op2_vector->at(i);
             }
             break;
         default:

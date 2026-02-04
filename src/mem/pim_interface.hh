@@ -48,7 +48,7 @@ class PIMInterface : public DRAMInterface
 
       public:
         PIMInstruction(PIMInstructionType _type);
-        virtual void exec();
+        virtual void exec(PacketPtr pkt);
     };
 
     class ControlInstruction : public PIMInstruction
@@ -59,7 +59,7 @@ class PIMInterface : public DRAMInterface
       public:
         ControlInstruction(PIMInstructionType _type, int8_t _imm0,
                            int8_t _imm1);
-        void exec() override;
+        void exec(PacketPtr pkt) override;
     };
 
     class DataInstruction : public PIMInstruction
@@ -73,7 +73,7 @@ class PIMInterface : public DRAMInterface
         DataInstruction(PIMInstructionType _type, Operand _dest,
                         int24_t _dest_idx, Operand _src0, int24_t _src0_idx,
                         bool _do_relu);
-        void exec() override;
+        void exec(PacketPtr pkt) override;
     };
 
     class ALUInstruction : public PIMInstruction
@@ -86,7 +86,7 @@ class PIMInterface : public DRAMInterface
         ALUInstruction(PIMInstructionType _type, Operand _dest,
                        int24_t _dest_idx, Operand _src0, int24_t _src0_idx,
                        Operand _src1, int24_t _src1_idx, Operand _src2);
-        void exec() override;
+        void exec(PacketPtr pkt) override;
     };
 
     /*
@@ -121,7 +121,7 @@ class PIMInterface : public DRAMInterface
      */
     const Addr pim_range_start;
 
-    SIMD_vector *getVector(Operand op_type, int24_t op_idx);
+    uint16_t *getVector(Operand op_type, int24_t op_idx, PacketPtr pkt);
     PIMInstruction format_instruction(uint32_t raw_instr);
     void executeKernel(PacketPtr pkt);
 
