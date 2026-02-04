@@ -167,3 +167,8 @@ DebugFlag('TokenPort')
 DebugFlag("MemChecker")
 DebugFlag("MemCheckerMonitor")
 DebugFlag("QOS")
+
+# PIM
+SimObject('PIMInterface.py', sim_objects=['PIMInterface'])
+Source('pim_interface.cc')
+DebugFlag('PIM')

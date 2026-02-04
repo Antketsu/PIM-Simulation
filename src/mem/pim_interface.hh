@@ -6,6 +6,7 @@
 #ifndef __PIM_INTERFACE_HH__
 #define __PIM_INTERFACE_HH__
 #include <vector>
+#include "debug/PIM.hh"
 #include "mem/dram_interface.hh"
 #include "params/PIMInterface.hh"
 
@@ -39,7 +40,7 @@ class PIMInterface : public DRAMInterface
         SRF_A
     };
 
-    typedef std::vector<uint16_t> SIMD_vector;
+    typedef std::vector<int16_t> SIMD_vector;
 
     class PIMInstruction
     {
@@ -47,8 +48,13 @@ class PIMInterface : public DRAMInterface
         PIMInstructionType type;
 
       public:
-        PIMInstruction(PIMInstructionType _type);
-        virtual void exec(PacketPtr pkt);
+        PIMInstruction(PIMInstructionType _type = NOP);
+        std::string getType();
+        virtual void
+        exec(PacketPtr pkt, PIMInterface *pim)
+        {
+            panic("exec() not implemented for base PIMInstruction class\n");
+        }
     };
 
     class ControlInstruction : public PIMInstruction
@@ -59,34 +65,34 @@ class PIMInterface : public DRAMInterface
       public:
         ControlInstruction(PIMInstructionType _type, int8_t _imm0,
                            int8_t _imm1);
-        void exec(PacketPtr pkt) override;
+        void exec(PacketPtr pkt, PIMInterface *pim) override;
     };
 
     class DataInstruction : public PIMInstruction
     {
       private:
         Operand dest, src0;
-        int24_t dest_idx, src0_idx;
+        uint32_t dest_idx, src0_idx;
         bool do_relu;
 
       public:
         DataInstruction(PIMInstructionType _type, Operand _dest,
-                        int24_t _dest_idx, Operand _src0, int24_t _src0_idx,
+                        uint32_t _dest_idx, Operand _src0, uint32_t _src0_idx,
                         bool _do_relu);
-        void exec(PacketPtr pkt) override;
+        void exec(PacketPtr pkt, PIMInterface *pim) override;
     };
 
     class ALUInstruction : public PIMInstruction
     {
       private:
         Operand dest, src0, src1, src2;
-        int24_t dest_idx, src0_idx, src1_idx;
+        uint32_t dest_idx, src0_idx, src1_idx;
 
       public:
         ALUInstruction(PIMInstructionType _type, Operand _dest,
-                       int24_t _dest_idx, Operand _src0, int24_t _src0_idx,
-                       Operand _src1, int24_t _src1_idx, Operand _src2);
-        void exec(PacketPtr pkt) override;
+                       uint32_t _dest_idx, Operand _src0, uint32_t _src0_idx,
+                       Operand _src1, uint32_t _src1_idx, Operand _src2);
+        void exec(PacketPtr pkt, PIMInterface *pim) override;
     };
 
     /*
@@ -119,16 +125,22 @@ class PIMInterface : public DRAMInterface
     /*
      * Start address of the PIM memory region
      */
-    const Addr pim_range_start;
+    Addr pim_range_start;
 
-    uint16_t *getVector(Operand op_type, int24_t op_idx, PacketPtr pkt);
+    int16_t *getVector(Operand op_type, uint32_t op_idx, PacketPtr pkt);
     PIMInstruction format_instruction(uint32_t raw_instr);
     void executeKernel(PacketPtr pkt);
 
   public:
     PIMInterface(const PIMInterfaceParams &_p);
-    void access(PacketPtr pkt) override;
+    void access(PacketPtr pkt);
+    void incrementPC();
+    void decrementPC(uint8_t stride);
+    void deactivatePIMMode();
+    uint8_t getSIMDWidth();
 };
 
 } // namespace memory
 } // namespace gem5
+
+#endif // __PIM_INTERFACE_HH__

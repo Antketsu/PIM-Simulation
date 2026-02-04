@@ -1,3 +1,4 @@
+from m5.objects.DRAMInterface import DRAMInterface
 from m5.params import *
 
 
