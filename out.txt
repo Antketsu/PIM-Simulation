@@ -1,0 +1,1114 @@
+scons: Reading SConscript files ...
+Mkdir("/homelocal/antoma19_local/u/tfm/gem5-pim/build/X86/gem5.build")
+Checking for linker -Wl,--as-needed support... (cached) yes
+Checking for compiler -gz support... (cached) yes
+Checking for linker -gz support... (cached) yes
+Info: Using Python config: python3-config
+Checking for C header file Python.h... (cached) yes
+Checking Python version... (cached) 3.12.3
+Checking for accept(0,0,0) in C++ library None... (cached) yes
+Checking for zlibVersion() in C++ library z... (cached) yes
+Checking for C library tcmalloc_minimal... (cached) yes
+Building in /homelocal/antoma19_local/u/tfm/gem5-pim/build/X86
+"build_tools/kconfig_base.py" "/homelocal/antoma19_local/u/tfm/gem5-pim/build/X86/gem5.build/Kconfig" "/homelocal/antoma19_local/u/tfm/gem5-pim/src/Kconfig"
+Checking for shm_open("/test", 0, 0) in C library None... (cached) yes
+Checking for pkg-config package protobuf... (cached) yes
+Checking for backtrace_symbols_fd((void *)1, 0, 0) in C library None... (cached) yes
+Checking for C header file linux/if_tun.h... (cached) yes
+Checking for C header file fenv.h... (cached) yes
+Checking for C header file png.h... (cached) yes
+Checking for clock_nanosleep(0,0,NULL,NULL) in C library None... (cached) yes
+Checking for C header file valgrind/valgrind.h... (cached) no
+Checking for pkg-config package hdf5-serial... (cached) yes
+Checking for H5Fcreate("", 0, 0, 0) in C library hdf5... (cached) yes
+Checking for H5::H5File("", 0) in C++ library hdf5_cpp... (cached) yes
+Checking size of struct kvm_xsave ... (cached) yes
+Checking for C header file capstone/capstone.h... (cached) yes
+Checking for C header file linux/kvm.h... (cached) yes
+Checking for timer_create(CLOCK_MONOTONIC, NULL, NULL) in C library None... (cached) yes
+Checking for member exclude_host in struct perf_event_attr...(cached) yes
+Checking whether __i386__ is declared... (cached) no
+Checking whether __x86_64__ is declared... (cached) yes
+BUILD_TLM not set, not building CHI-TLM integration
+
+Checking for compiler -Wno-self-assign-overloaded support... (cached) yes
+Checking for linker -Wno-free-nonheap-object support... (cached) yes
+scons: done reading SConscript files.
+scons: Building targets ...
+ [     CXX] X86/python/_m5/param_PIMCtrl.cc -> .o
+ [     CXX] src/mem/pim_ctrl.cc -> X86/mem/pim_ctrl.o
+ [VER TAGS]  -> X86/sim/tags.cc
+src/mem/pim_ctrl.cc:60:1: error: ‘PIMCtrl’ does not name a type
+   60 | PIMCtrl::PIMCtrl(const PIMCtrlParams &p) :
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:65:67: error: expected unqualified-id before ‘,’ token
+   65 |                          respondEvent, nextReqEvent, retryWrReq);}, name()),
+      |                                                                   ^
+src/mem/pim_ctrl.cc:65:75: error: expected constructor, destructor, or type conversion before ‘)’ token
+   65 |                          respondEvent, nextReqEvent, retryWrReq);}, name()),
+      |                                                                           ^
+src/mem/pim_ctrl.cc:67:54: error: expected unqualified-id before ‘,’ token
+   67 |                          respondEvent, retryRdReq); }, name()),
+      |                                                      ^
+src/mem/pim_ctrl.cc:67:62: error: expected constructor, destructor, or type conversion before ‘)’ token
+   67 |                          respondEvent, retryRdReq); }, name()),
+      |                                                              ^
+src/mem/pim_ctrl.cc:100:1: error: ‘PIMCtrl’ has not been declared
+  100 | PIMCtrl::init()
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘void gem5::memory::init()’:
+src/mem/pim_ctrl.cc:102:9: error: ‘port’ was not declared in this scope; did you mean ‘Port’?
+  102 |    if (!port.isConnected()) {
+      |         ^~~~
+      |         Port
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:110:1: error: ‘PIMCtrl’ has not been declared
+  110 | PIMCtrl::startup()
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘void gem5::memory::startup()’:
+src/mem/pim_ctrl.cc:113:5: error: ‘isTimingMode’ was not declared in this scope
+  113 |     isTimingMode = system()->isTimingMode();
+      |     ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:113:26: error: too few arguments to function ‘int system(const char*)’
+  113 |     isTimingMode = system()->isTimingMode();
+      |                    ~~~~~~^~
+In file included from /usr/include/c++/13/cstdlib:79,
+                 from /usr/include/c++/13/ext/string_conversions.h:43,
+                 from /usr/include/c++/13/bits/basic_string.h:4109,
+                 from /usr/include/c++/13/string:54,
+                 from src/mem/mem_ctrl.hh:50,
+                 from src/mem/pim_ctrl.cc:41:
+/usr/include/stdlib.h:923:12: note: declared here
+  923 | extern int system (const char *__command) __wur;
+      |            ^~~~~~
+src/mem/pim_ctrl.cc:120:9: error: ‘dram’ was not declared in this scope; did you mean ‘drem’?
+  120 |         dram->nextBurstAt = curTick() + dram->commandOffset();
+      |         ^~~~
+      |         drem
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:125:1: error: ‘PIMCtrl’ has not been declared
+  125 | PIMCtrl::recvAtomic(PacketPtr pkt)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::Tick gem5::memory::recvAtomic(gem5::PacketPtr)’:
+src/mem/pim_ctrl.cc:127:10: error: ‘dram’ was not declared in this scope; did you mean ‘drem’?
+  127 |     if (!dram->getAddrRange().contains(pkt->getAddr())) {
+      |          ^~~~
+      |          drem
+src/mem/pim_ctrl.cc:131:33: error: ‘dram’ was not declared in this scope; did you mean ‘drem’?
+  131 |     return recvAtomicLogic(pkt, dram);
+      |                                 ^~~~
+      |                                 drem
+src/mem/pim_ctrl.cc:131:12: error: ‘recvAtomicLogic’ was not declared in this scope; did you mean ‘recvAtomic’?
+  131 |     return recvAtomicLogic(pkt, dram);
+      |            ^~~~~~~~~~~~~~~
+      |            recvAtomic
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:136:1: error: ‘PIMCtrl’ has not been declared
+  136 | PIMCtrl::recvAtomicLogic(PacketPtr pkt, PIMInterface* mem_intr)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:136:41: error: ‘PIMInterface’ has not been declared
+  136 | PIMCtrl::recvAtomicLogic(PacketPtr pkt, PIMInterface* mem_intr)
+      |                                         ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::Tick gem5::memory::recvAtomicLogic(gem5::PacketPtr, int*)’:
+src/mem/pim_ctrl.cc:145:15: error: request for member ‘access’ in ‘* mem_intr’, which is of non-class type ‘int’
+  145 |     mem_intr->access(pkt);
+      |               ^~~~~~
+src/mem/pim_ctrl.cc:151:26: error: request for member ‘accessLatency’ in ‘* mem_intr’, which is of non-class type ‘int’
+  151 |         return mem_intr->accessLatency();
+      |                          ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:158:1: error: ‘PIMCtrl’ has not been declared
+  158 | PIMCtrl::recvAtomicBackdoor(PacketPtr pkt, MemBackdoorPtr &backdoor)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::Tick gem5::memory::recvAtomicBackdoor(gem5::PacketPtr, gem5::MemBackdoor*&)’:
+src/mem/pim_ctrl.cc:161:5: error: ‘dram’ was not declared in this scope; did you mean ‘drem’?
+  161 |     dram->getBackdoor(backdoor);
+      |     ^~~~
+      |     drem
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:166:1: error: ‘PIMCtrl’ has not been declared
+  166 | PIMCtrl::readQueueFull(unsigned int neededEntries) const
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:166:52: error: non-member function ‘bool gem5::memory::readQueueFull(unsigned int)’ cannot have cv-qualifier
+  166 | PIMCtrl::readQueueFull(unsigned int neededEntries) const
+      |                                                    ^~~~~
+In file included from src/mem/qos/mem_ctrl.hh:51,
+                 from src/mem/mem_ctrl.hh:58:
+src/mem/pim_ctrl.cc: In function ‘bool gem5::memory::readQueueFull(unsigned int)’:
+src/mem/pim_ctrl.cc:170:13: error: ‘readBufferSize’ was not declared in this scope
+  170 |             readBufferSize, totalReadQueueSize + respQueue.size(),
+      |             ^~~~~~~~~~~~~~
+src/base/trace.hh:212:44: note: in definition of macro ‘DPRINTF’
+  212 |             ::gem5::curTick(), name(), #x, __VA_ARGS__); \
+      |                                            ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:170:29: error: ‘totalReadQueueSize’ was not declared in this scope
+  170 |             readBufferSize, totalReadQueueSize + respQueue.size(),
+      |                             ^~~~~~~~~~~~~~~~~~
+src/base/trace.hh:212:44: note: in definition of macro ‘DPRINTF’
+  212 |             ::gem5::curTick(), name(), #x, __VA_ARGS__); \
+      |                                            ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:170:50: error: ‘respQueue’ was not declared in this scope
+  170 |             readBufferSize, totalReadQueueSize + respQueue.size(),
+      |                                                  ^~~~~~~~~
+src/base/trace.hh:212:44: note: in definition of macro ‘DPRINTF’
+  212 |             ::gem5::curTick(), name(), #x, __VA_ARGS__); \
+      |                                            ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:173:23: error: ‘totalReadQueueSize’ was not declared in this scope
+  173 |     auto rdsize_new = totalReadQueueSize + respQueue.size() + neededEntries;
+      |                       ^~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:173:44: error: ‘respQueue’ was not declared in this scope
+  173 |     auto rdsize_new = totalReadQueueSize + respQueue.size() + neededEntries;
+      |                                            ^~~~~~~~~
+src/mem/pim_ctrl.cc:174:25: error: ‘readBufferSize’ was not declared in this scope
+  174 |     return rdsize_new > readBufferSize;
+      |                         ^~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:178:1: error: ‘PIMCtrl’ has not been declared
+  178 | PIMCtrl::writeQueueFull(unsigned int neededEntries) const
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:178:53: error: non-member function ‘bool gem5::memory::writeQueueFull(unsigned int)’ cannot have cv-qualifier
+  178 | PIMCtrl::writeQueueFull(unsigned int neededEntries) const
+      |                                                     ^~~~~
+src/mem/pim_ctrl.cc: In function ‘bool gem5::memory::writeQueueFull(unsigned int)’:
+src/mem/pim_ctrl.cc:182:13: error: ‘writeBufferSize’ was not declared in this scope
+  182 |             writeBufferSize, totalWriteQueueSize, neededEntries);
+      |             ^~~~~~~~~~~~~~~
+src/base/trace.hh:212:44: note: in definition of macro ‘DPRINTF’
+  212 |             ::gem5::curTick(), name(), #x, __VA_ARGS__); \
+      |                                            ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:182:30: error: ‘totalWriteQueueSize’ was not declared in this scope
+  182 |             writeBufferSize, totalWriteQueueSize, neededEntries);
+      |                              ^~~~~~~~~~~~~~~~~~~
+src/base/trace.hh:212:44: note: in definition of macro ‘DPRINTF’
+  212 |             ::gem5::curTick(), name(), #x, __VA_ARGS__); \
+      |                                            ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:184:24: error: ‘totalWriteQueueSize’ was not declared in this scope
+  184 |     auto wrsize_new = (totalWriteQueueSize + neededEntries);
+      |                        ^~~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:185:26: error: ‘writeBufferSize’ was not declared in this scope
+  185 |     return  wrsize_new > writeBufferSize;
+      |                          ^~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:189:1: error: ‘PIMCtrl’ has not been declared
+  189 | PIMCtrl::addToReadQueue(PacketPtr pkt,
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:190:41: error: ‘PIMInterface’ has not been declared
+  190 |                 unsigned int pkt_count, PIMInterface* mem_intr)
+      |                                         ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc: In function ‘bool gem5::memory::addToReadQueue(gem5::PacketPtr, unsigned int, int*)’:
+src/mem/pim_ctrl.cc:209:37: error: request for member ‘bytesPerBurst’ in ‘* mem_intr’, which is of non-class type ‘int’
+  209 |     uint32_t burst_size = mem_intr->bytesPerBurst();
+      |                                     ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:214:9: error: ‘stats’ was not declared in this scope; did you mean ‘static’?
+  214 |         stats.readPktSize[ceilLog2(size)]++;
+      |         ^~~~~
+      |         static
+src/mem/pim_ctrl.cc:221:27: error: ‘burstAlign’ was not declared in this scope
+  221 |         Addr burst_addr = burstAlign(addr, mem_intr);
+      |                           ^~~~~~~~~~
+src/mem/pim_ctrl.cc:224:13: error: ‘isInWriteQueue’ was not declared in this scope
+  224 |         if (isInWriteQueue.find(burst_addr) != isInWriteQueue.end()) {
+      |             ^~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:225:36: error: ‘writeQueue’ was not declared in this scope; did you mean ‘writeQueueFull’?
+  225 |             for (const auto& vec : writeQueue) {
+      |                                    ^~~~~~~~~~
+      |                                    writeQueueFull
+src/mem/pim_ctrl.cc:258:33: error: request for member ‘decodePacket’ in ‘* mem_intr’, which is of non-class type ‘int’
+  258 |             mem_pkt = mem_intr->decodePacket(pkt, addr, size, true,
+      |                                 ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:259:63: error: request for member ‘pseudoChannel’ in ‘* mem_intr’, which is of non-class type ‘int’
+  259 |                                                     mem_intr->pseudoChannel);
+      |                                                               ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:263:23: error: request for member ‘setupRank’ in ‘* mem_intr’, which is of non-class type ‘int’
+  263 |             mem_intr->setupRank(mem_pkt->rank, true);
+      |                       ^~~~~~~~~
+src/mem/pim_ctrl.cc:269:29: error: ‘totalReadQueueSize’ was not declared in this scope
+  269 |             stats.rdQLenPdf[totalReadQueueSize + respQueue.size()]++;
+      |                             ^~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:269:50: error: ‘respQueue’ was not declared in this scope
+  269 |             stats.rdQLenPdf[totalReadQueueSize + respQueue.size()]++;
+      |                                                  ^~~~~~~~~
+src/mem/pim_ctrl.cc:273:13: error: ‘readQueue’ was not declared in this scope; did you mean ‘readQueueFull’?
+  273 |             readQueue[mem_pkt->qosValue()].push_back(mem_pkt);
+      |             ^~~~~~~~~
+      |             readQueueFull
+src/mem/pim_ctrl.cc:276:24: error: ‘PIMCtrl’ has not been declared
+  276 |             logRequest(PIMCtrl::READ, pkt->requestorId(),
+      |                        ^~~~~~~
+src/mem/pim_ctrl.cc:276:13: error: ‘logRequest’ was not declared in this scope; did you mean ‘Request’?
+  276 |             logRequest(PIMCtrl::READ, pkt->requestorId(),
+      |             ^~~~~~~~~~
+      |             Request
+src/mem/pim_ctrl.cc:279:23: error: request for member ‘readQueueSize’ in ‘* mem_intr’, which is of non-class type ‘int’
+  279 |             mem_intr->readQueueSize++;
+      |                       ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:291:31: error: ‘frontendLatency’ was not declared in this scope
+  291 |         accessAndRespond(pkt, frontendLatency, mem_intr);
+      |                               ^~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:291:9: error: ‘accessAndRespond’ was not declared in this scope
+  291 |         accessAndRespond(pkt, frontendLatency, mem_intr);
+      |         ^~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:304:1: error: ‘PIMCtrl’ has not been declared
+  304 | PIMCtrl::addToWriteQueue(PacketPtr pkt, unsigned int pkt_count,
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:305:33: error: ‘PIMInterface’ has not been declared
+  305 |                                 PIMInterface* mem_intr)
+      |                                 ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc: In function ‘void gem5::memory::addToWriteQueue(gem5::PacketPtr, unsigned int, int*)’:
+src/mem/pim_ctrl.cc:315:37: error: request for member ‘bytesPerBurst’ in ‘* mem_intr’, which is of non-class type ‘int’
+  315 |     uint32_t burst_size = mem_intr->bytesPerBurst();
+      |                                     ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:320:9: error: ‘stats’ was not declared in this scope; did you mean ‘static’?
+  320 |         stats.writePktSize[ceilLog2(size)]++;
+      |         ^~~~~
+      |         static
+src/mem/pim_ctrl.cc:326:23: error: ‘isInWriteQueue’ was not declared in this scope; did you mean ‘addToWriteQueue’?
+  326 |         bool merged = isInWriteQueue.find(burstAlign(addr, mem_intr)) !=
+      |                       ^~~~~~~~~~~~~~
+      |                       addToWriteQueue
+src/mem/pim_ctrl.cc:326:43: error: ‘burstAlign’ was not declared in this scope
+  326 |         bool merged = isInWriteQueue.find(burstAlign(addr, mem_intr)) !=
+      |                                           ^~~~~~~~~~
+src/mem/pim_ctrl.cc:333:33: error: request for member ‘decodePacket’ in ‘* mem_intr’, which is of non-class type ‘int’
+  333 |             mem_pkt = mem_intr->decodePacket(pkt, addr, size, false,
+      |                                 ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:334:63: error: request for member ‘pseudoChannel’ in ‘* mem_intr’, which is of non-class type ‘int’
+  334 |                                                     mem_intr->pseudoChannel);
+      |                                                               ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:339:23: error: request for member ‘setupRank’ in ‘* mem_intr’, which is of non-class type ‘int’
+  339 |             mem_intr->setupRank(mem_pkt->rank, false);
+      |                       ^~~~~~~~~
+In file included from /usr/include/c++/13/cassert:44,
+                 from ext/drampower/src/MemorySpecification.h:41,
+                 from ext/drampower/src/MemCommand.h:45,
+                 from ext/drampower/src/CommandAnalysis.h:53,
+                 from ext/drampower/src/libdrampower/LibDRAMPower.h:48,
+                 from src/mem/drampower.hh:46,
+                 from src/mem/dram_interface.hh:49,
+                 from src/mem/pim_ctrl.cc:49:
+src/mem/pim_ctrl.cc:341:20: error: ‘totalWriteQueueSize’ was not declared in this scope
+  341 |             assert(totalWriteQueueSize < writeBufferSize);
+      |                    ^~~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:341:42: error: ‘writeBufferSize’ was not declared in this scope
+  341 |             assert(totalWriteQueueSize < writeBufferSize);
+      |                                          ^~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:346:13: error: ‘writeQueue’ was not declared in this scope; did you mean ‘writeQueueFull’?
+  346 |             writeQueue[mem_pkt->qosValue()].push_back(mem_pkt);
+      |             ^~~~~~~~~~
+      |             writeQueueFull
+src/mem/pim_ctrl.cc:350:24: error: ‘PIMCtrl’ has not been declared
+  350 |             logRequest(PIMCtrl::WRITE, pkt->requestorId(),
+      |                        ^~~~~~~
+src/mem/pim_ctrl.cc:350:13: error: ‘logRequest’ was not declared in this scope; did you mean ‘Request’?
+  350 |             logRequest(PIMCtrl::WRITE, pkt->requestorId(),
+      |             ^~~~~~~~~~
+      |             Request
+src/mem/pim_ctrl.cc:353:23: error: request for member ‘writeQueueSize’ in ‘* mem_intr’, which is of non-class type ‘int’
+  353 |             mem_intr->writeQueueSize++;
+      |                       ^~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:378:27: error: ‘frontendLatency’ was not declared in this scope
+  378 |     accessAndRespond(pkt, frontendLatency, mem_intr);
+      |                           ^~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:378:5: error: ‘accessAndRespond’ was not declared in this scope
+  378 |     accessAndRespond(pkt, frontendLatency, mem_intr);
+      |     ^~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:382:1: error: ‘PIMCtrl’ has not been declared
+  382 | PIMCtrl::printQs() const
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:382:20: error: non-member function ‘void gem5::memory::printQs()’ cannot have cv-qualifier
+  382 | PIMCtrl::printQs() const
+      |                    ^~~~~
+src/mem/pim_ctrl.cc: In function ‘void gem5::memory::printQs()’:
+src/mem/pim_ctrl.cc:386:30: error: ‘readQueue’ was not declared in this scope; did you mean ‘readQueueFull’?
+  386 |     for (const auto& queue : readQueue) {
+      |                              ^~~~~~~~~
+      |                              readQueueFull
+src/mem/pim_ctrl.cc:393:31: error: ‘respQueue’ was not declared in this scope
+  393 |     for (const auto& packet : respQueue) {
+      |                               ^~~~~~~~~
+src/mem/pim_ctrl.cc:398:30: error: ‘writeQueue’ was not declared in this scope; did you mean ‘writeQueueFull’?
+  398 |     for (const auto& queue : writeQueue) {
+      |                              ^~~~~~~~~~
+      |                              writeQueueFull
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:407:1: error: ‘PIMCtrl’ has not been declared
+  407 | PIMCtrl::recvTimingReq(PacketPtr pkt)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘bool gem5::memory::recvTimingReq(gem5::PacketPtr)’:
+src/mem/pim_ctrl.cc:420:9: error: ‘prevArrival’ was not declared in this scope
+  420 |     if (prevArrival != 0) {
+      |         ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:421:9: error: ‘stats’ was not declared in this scope; did you mean ‘static’?
+  421 |         stats.totGap += curTick() - prevArrival;
+      |         ^~~~~
+      |         static
+src/mem/pim_ctrl.cc:423:5: error: ‘prevArrival’ was not declared in this scope
+  423 |     prevArrival = curTick();
+      |     ^~~~~~~~~~~
+In file included from src/base/logging.hh:51,
+                 from src/base/cast.hh:34,
+                 from src/base/statistics.hh:76,
+                 from src/mem/mem_ctrl.hh:56:
+src/mem/pim_ctrl.cc:425:16: error: ‘dram’ was not declared in this scope; did you mean ‘drem’?
+  425 |     panic_if(!(dram->getAddrRange().contains(pkt->getAddr())),
+      |                ^~~~
+src/base/compiler.hh:80:49: note: in definition of macro ‘GEM5_UNLIKELY’
+   80 | #define GEM5_UNLIKELY(cond) __builtin_expect(!!(cond), 0)
+      |                                                 ^~~~
+src/mem/pim_ctrl.cc:425:5: note: in expansion of macro ‘panic_if’
+  425 |     panic_if(!(dram->getAddrRange().contains(pkt->getAddr())),
+      |     ^~~~~~~~
+src/mem/pim_ctrl.cc:439:21: error: ‘readQueue’ was not declared in this scope; did you mean ‘readQueueFull’?
+  439 |     qosSchedule( { &readQueue, &writeQueue }, burst_size, pkt);
+      |                     ^~~~~~~~~
+      |                     readQueueFull
+src/mem/pim_ctrl.cc:439:33: error: ‘writeQueue’ was not declared in this scope; did you mean ‘writeQueueFull’?
+  439 |     qosSchedule( { &readQueue, &writeQueue }, burst_size, pkt);
+      |                                 ^~~~~~~~~~
+      |                                 writeQueueFull
+src/mem/pim_ctrl.cc:439:5: error: ‘qosSchedule’ was not declared in this scope
+  439 |     qosSchedule( { &readQueue, &writeQueue }, burst_size, pkt);
+      |     ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:447:13: error: ‘retryWrReq’ was not declared in this scope
+  447 |             retryWrReq = true;
+      |             ^~~~~~~~~~
+src/mem/pim_ctrl.cc:448:13: error: ‘stats’ was not declared in this scope; did you mean ‘static’?
+  448 |             stats.numWrRetry++;
+      |             ^~~~~
+      |             static
+src/mem/pim_ctrl.cc:454:18: error: ‘nextReqEvent’ was not declared in this scope
+  454 |             if (!nextReqEvent.scheduled()) {
+      |                  ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:456:17: error: ‘schedule’ was not declared in this scope
+  456 |                 schedule(nextReqEvent, curTick());
+      |                 ^~~~~~~~
+src/mem/pim_ctrl.cc:458:13: error: ‘stats’ was not declared in this scope; did you mean ‘static’?
+  458 |             stats.writeReqs++;
+      |             ^~~~~
+      |             static
+src/mem/pim_ctrl.cc:467:13: error: ‘retryRdReq’ was not declared in this scope
+  467 |             retryRdReq = true;
+      |             ^~~~~~~~~~
+src/mem/pim_ctrl.cc:468:13: error: ‘stats’ was not declared in this scope; did you mean ‘static’?
+  468 |             stats.numRdRetry++;
+      |             ^~~~~
+      |             static
+src/mem/pim_ctrl.cc:474:22: error: ‘nextReqEvent’ was not declared in this scope
+  474 |                 if (!nextReqEvent.scheduled()) {
+      |                      ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:476:21: error: ‘schedule’ was not declared in this scope
+  476 |                     schedule(nextReqEvent, curTick());
+      |                     ^~~~~~~~
+src/mem/pim_ctrl.cc:479:13: error: ‘stats’ was not declared in this scope; did you mean ‘static’?
+  479 |             stats.readReqs++;
+      |             ^~~~~
+      |             static
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:488:1: error: ‘PIMCtrl’ has not been declared
+  488 | PIMCtrl::processRespondEvent(PIMInterface* mem_intr,
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:488:1: error: variable or field ‘processRespondEvent’ declared void
+src/mem/pim_ctrl.cc:488:30: error: ‘PIMInterface’ was not declared in this scope; did you mean ‘NVMInterface’?
+  488 | PIMCtrl::processRespondEvent(PIMInterface* mem_intr,
+      |                              ^~~~~~~~~~~~
+      |                              NVMInterface
+src/mem/pim_ctrl.cc:488:44: error: ‘mem_intr’ was not declared in this scope
+  488 | PIMCtrl::processRespondEvent(PIMInterface* mem_intr,
+      |                                            ^~~~~~~~
+src/mem/pim_ctrl.cc:489:39: error: expected primary-expression before ‘&’ token
+  489 |                         MemPacketQueue& queue,
+      |                                       ^
+src/mem/pim_ctrl.cc:489:41: error: ‘queue’ was not declared in this scope
+  489 |                         MemPacketQueue& queue,
+      |                                         ^~~~~
+src/mem/pim_ctrl.cc:490:45: error: expected primary-expression before ‘&’ token
+  490 |                         EventFunctionWrapper& resp_event,
+      |                                             ^
+src/mem/pim_ctrl.cc:490:47: error: ‘resp_event’ was not declared in this scope; did you mean ‘sigevent’?
+  490 |                         EventFunctionWrapper& resp_event,
+      |                                               ^~~~~~~~~~
+      |                                               sigevent
+src/mem/pim_ctrl.cc:491:25: error: expected primary-expression before ‘bool’
+  491 |                         bool& retry_rd_req)
+      |                         ^~~~
+src/mem/pim_ctrl.cc:557:1: error: ‘PIMCtrl’ has not been declared
+  557 | PIMCtrl::chooseNext(MemPacketQueue& queue, Tick extra_col_delay,
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:558:49: error: ‘PIMInterface’ has not been declared
+  558 |                                                 PIMInterface* mem_intr)
+      |                                                 ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc: In function ‘std::deque<gem5::memory::MemPacket*>::iterator gem5::memory::chooseNext(MemPacketQueue&, gem5::Tick, int*)’:
+src/mem/pim_ctrl.cc:568:53: error: request for member ‘pseudoChannel’ in ‘* mem_intr’, which is of non-class type ‘int’
+  568 |             if (mem_pkt->pseudoChannel != mem_intr->pseudoChannel) {
+      |                                                     ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:571:17: error: ‘packetReady’ was not declared in this scope
+  571 |             if (packetReady(mem_pkt, mem_intr)) {
+      |                 ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:577:20: error: ‘memSchedPolicy’ was not declared in this scope
+  577 |         } else if (memSchedPolicy == enums::fcfs) {
+      |                    ^~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:581:57: error: request for member ‘pseudoChannel’ in ‘* mem_intr’, which is of non-class type ‘int’
+  581 |                 if (mem_pkt->pseudoChannel != mem_intr->pseudoChannel) {
+      |                                                         ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:584:21: error: ‘packetReady’ was not declared in this scope
+  584 |                 if (packetReady(mem_pkt, mem_intr)) {
+      |                     ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:592:23: error: ‘chooseNextFRFCFS’ was not declared in this scope; did you mean ‘chooseNext’?
+  592 |                     = chooseNextFRFCFS(queue, extra_col_delay, mem_intr);
+      |                       ^~~~~~~~~~~~~~~~
+      |                       chooseNext
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:601:1: error: ‘PIMCtrl’ has not been declared
+  601 | PIMCtrl::chooseNextFRFCFS(MemPacketQueue& queue, Tick extra_col_delay,
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:602:33: error: ‘PIMInterface’ has not been declared
+  602 |                                 PIMInterface* mem_intr)
+      |                                 ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc: In function ‘std::pair<std::_Deque_iterator<gem5::memory::MemPacket*, gem5::memory::MemPacket*&, gem5::memory::MemPacket**>, long unsigned int> gem5::memory::chooseNextFRFCFS(MemPacketQueue&, gem5::Tick, int*)’:
+src/mem/pim_ctrl.cc:608:48: error: request for member ‘nextBurstAt’ in ‘* mem_intr’, which is of non-class type ‘int’
+  608 |     const Tick min_col_at = std::max(mem_intr->nextBurstAt + extra_col_delay,
+      |                                                ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:612:28: error: request for member ‘chooseNextFRFCFS’ in ‘* mem_intr’, which is of non-class type ‘int’
+  612 |                  mem_intr->chooseNextFRFCFS(queue, min_col_at);
+      |                            ^~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:622:1: error: ‘PIMCtrl’ has not been declared
+  622 | PIMCtrl::accessAndRespond(PacketPtr pkt, Tick static_latency,
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:623:49: error: ‘PIMInterface’ has not been declared
+  623 |                                                 PIMInterface* mem_intr)
+      |                                                 ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc: In function ‘void gem5::memory::accessAndRespond(gem5::PacketPtr, gem5::Tick, int*)’:
+src/mem/pim_ctrl.cc:630:25: error: request for member ‘getAddrRange’ in ‘* mem_intr’, which is of non-class type ‘int’
+  630 |     panic_if(!mem_intr->getAddrRange().contains(pkt->getAddr()),
+      |                         ^~~~~~~~~~~~
+src/base/compiler.hh:80:49: note: in definition of macro ‘GEM5_UNLIKELY’
+   80 | #define GEM5_UNLIKELY(cond) __builtin_expect(!!(cond), 0)
+      |                                                 ^~~~
+src/mem/pim_ctrl.cc:630:5: note: in expansion of macro ‘panic_if’
+  630 |     panic_if(!mem_intr->getAddrRange().contains(pkt->getAddr()),
+      |     ^~~~~~~~
+src/mem/pim_ctrl.cc:632:15: error: request for member ‘access’ in ‘* mem_intr’, which is of non-class type ‘int’
+  632 |     mem_intr->access(pkt);
+      |               ^~~~~~
+src/mem/pim_ctrl.cc:649:9: error: ‘port’ was not declared in this scope; did you mean ‘Port’?
+  649 |         port.schedTimingResp(pkt, response_time);
+      |         ^~~~
+      |         Port
+src/mem/pim_ctrl.cc:653:9: error: ‘pendingDelete’ was not declared in this scope
+  653 |         pendingDelete.reset(pkt);
+      |         ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:662:1: error: ‘PIMCtrl’ has not been declared
+  662 | PIMCtrl::pruneBurstTick()
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘void gem5::memory::pruneBurstTick()’:
+src/mem/pim_ctrl.cc:664:15: error: ‘burstTicks’ was not declared in this scope; did you mean ‘curTick’?
+  664 |     auto it = burstTicks.begin();
+      |               ^~~~~~~~~~
+      |               curTick
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:675:1: error: ‘PIMCtrl’ has not been declared
+  675 | PIMCtrl::getBurstWindow(Tick cmd_tick)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::Tick gem5::memory::getBurstWindow(gem5::Tick)’:
+src/mem/pim_ctrl.cc:678:36: error: ‘commandWindow’ was not declared in this scope
+  678 |     Tick burst_offset = cmd_tick % commandWindow;
+      |                                    ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:683:1: error: ‘PIMCtrl’ has not been declared
+  683 | PIMCtrl::verifySingleCmd(Tick cmd_tick, Tick max_cmds_per_burst, bool row_cmd)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::Tick gem5::memory::verifySingleCmd(gem5::Tick, gem5::Tick, bool)’:
+src/mem/pim_ctrl.cc:693:12: error: ‘burstTicks’ was not declared in this scope; did you mean ‘burst_tick’?
+  693 |     while (burstTicks.count(burst_tick) >= max_cmds_per_burst) {
+      |            ^~~~~~~~~~
+      |            burst_tick
+src/mem/pim_ctrl.cc:696:23: error: ‘commandWindow’ was not declared in this scope
+  696 |         burst_tick += commandWindow;
+      |                       ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:701:5: error: ‘burstTicks’ was not declared in this scope; did you mean ‘burst_tick’?
+  701 |     burstTicks.insert(burst_tick);
+      |     ^~~~~~~~~~
+      |     burst_tick
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:706:1: error: ‘PIMCtrl’ has not been declared
+  706 | PIMCtrl::verifyMultiCmd(Tick cmd_tick, Tick max_cmds_per_burst,
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::Tick gem5::memory::verifyMultiCmd(gem5::Tick, gem5::Tick, gem5::Tick)’:
+src/mem/pim_ctrl.cc:721:40: error: ‘commandWindow’ was not declared in this scope
+  721 |     Tick first_cmd_offset = cmd_tick % commandWindow;
+      |                                        ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:735:32: error: ‘burstTicks’ was not declared in this scope; did you mean ‘burst_tick’?
+  735 |         auto first_cmd_count = burstTicks.count(first_cmd_tick);
+      |                                ^~~~~~~~~~
+      |                                burst_tick
+src/mem/pim_ctrl.cc:763:5: error: ‘burstTicks’ was not declared in this scope; did you mean ‘burst_tick’?
+  763 |     burstTicks.insert(burst_tick);
+      |     ^~~~~~~~~~
+      |     burst_tick
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:770:1: error: ‘PIMCtrl’ has not been declared
+  770 | PIMCtrl::inReadBusState(bool next_state, const PIMInterface* mem_intr) const
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:770:48: error: ‘PIMInterface’ does not name a type; did you mean ‘NVMInterface’?
+  770 | PIMCtrl::inReadBusState(bool next_state, const PIMInterface* mem_intr) const
+      |                                                ^~~~~~~~~~~~
+      |                                                NVMInterface
+src/mem/pim_ctrl.cc:770:72: error: non-member function ‘bool gem5::memory::inReadBusState(bool, const int*)’ cannot have cv-qualifier
+  770 | PIMCtrl::inReadBusState(bool next_state, const PIMInterface* mem_intr) const
+      |                                                                        ^~~~~
+src/mem/pim_ctrl.cc: In function ‘bool gem5::memory::inReadBusState(bool, const int*)’:
+src/mem/pim_ctrl.cc:776:27: error: request for member ‘busStateNext’ in ‘* mem_intr’, which is of non-class type ‘const int’
+  776 |         return (mem_intr->busStateNext == PIMCtrl::READ);
+      |                           ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:776:43: error: ‘PIMCtrl’ has not been declared
+  776 |         return (mem_intr->busStateNext == PIMCtrl::READ);
+      |                                           ^~~~~~~
+src/mem/pim_ctrl.cc:778:27: error: request for member ‘busState’ in ‘* mem_intr’, which is of non-class type ‘const int’
+  778 |         return (mem_intr->busState == PIMCtrl::READ);
+      |                           ^~~~~~~~
+src/mem/pim_ctrl.cc:778:39: error: ‘PIMCtrl’ has not been declared
+  778 |         return (mem_intr->busState == PIMCtrl::READ);
+      |                                       ^~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:783:1: error: ‘PIMCtrl’ has not been declared
+  783 | PIMCtrl::inWriteBusState(bool next_state, const PIMInterface* mem_intr) const
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:783:49: error: ‘PIMInterface’ does not name a type; did you mean ‘NVMInterface’?
+  783 | PIMCtrl::inWriteBusState(bool next_state, const PIMInterface* mem_intr) const
+      |                                                 ^~~~~~~~~~~~
+      |                                                 NVMInterface
+src/mem/pim_ctrl.cc:783:73: error: non-member function ‘bool gem5::memory::inWriteBusState(bool, const int*)’ cannot have cv-qualifier
+  783 | PIMCtrl::inWriteBusState(bool next_state, const PIMInterface* mem_intr) const
+      |                                                                         ^~~~~
+src/mem/pim_ctrl.cc: In function ‘bool gem5::memory::inWriteBusState(bool, const int*)’:
+src/mem/pim_ctrl.cc:789:27: error: request for member ‘busStateNext’ in ‘* mem_intr’, which is of non-class type ‘const int’
+  789 |         return (mem_intr->busStateNext == PIMCtrl::WRITE);
+      |                           ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:789:43: error: ‘PIMCtrl’ has not been declared
+  789 |         return (mem_intr->busStateNext == PIMCtrl::WRITE);
+      |                                           ^~~~~~~
+src/mem/pim_ctrl.cc:791:27: error: request for member ‘busState’ in ‘* mem_intr’, which is of non-class type ‘const int’
+  791 |         return (mem_intr->busState == PIMCtrl::WRITE);
+      |                           ^~~~~~~~
+src/mem/pim_ctrl.cc:791:39: error: ‘PIMCtrl’ has not been declared
+  791 |         return (mem_intr->busState == PIMCtrl::WRITE);
+      |                                       ^~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:796:1: error: ‘PIMCtrl’ has not been declared
+  796 | PIMCtrl::doBurstAccess(MemPacket* mem_pkt, PIMInterface* mem_intr)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:796:44: error: ‘PIMInterface’ has not been declared
+  796 | PIMCtrl::doBurstAccess(MemPacket* mem_pkt, PIMInterface* mem_intr)
+      |                                            ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::Tick gem5::memory::doBurstAccess(MemPacket*, int*)’:
+src/mem/pim_ctrl.cc:807:42: error: ‘selQueue’ was not declared in this scope
+  807 |     std::vector<MemPacketQueue>& queue = selQueue(mem_pkt->isRead());
+      |                                          ^~~~~~~~
+src/mem/pim_ctrl.cc:808:32: error: request for member ‘nextBurstAt’ in ‘* mem_intr’, which is of non-class type ‘int’
+  808 |     std::tie(cmd_at, mem_intr->nextBurstAt) =
+      |                                ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:809:23: error: request for member ‘doBurstAccess’ in ‘* mem_intr’, which is of non-class type ‘int’
+  809 |             mem_intr->doBurstAccess(mem_pkt, mem_intr->nextBurstAt, queue);
+      |                       ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:809:56: error: request for member ‘nextBurstAt’ in ‘* mem_intr’, which is of non-class type ‘int’
+  809 |             mem_intr->doBurstAccess(mem_pkt, mem_intr->nextBurstAt, queue);
+      |                                                        ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:812:58: error: request for member ‘nextBurstAt’ in ‘* mem_intr’, which is of non-class type ‘int’
+  812 |             mem_pkt->addr, mem_pkt->readyTime, mem_intr->nextBurstAt);
+      |                                                          ^~~~~~~~~~~
+src/base/trace.hh:212:44: note: in definition of macro ‘DPRINTF’
+  212 |             ::gem5::curTick(), name(), #x, __VA_ARGS__); \
+      |                                            ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:818:15: error: request for member ‘nextReqTime’ in ‘* mem_intr’, which is of non-class type ‘int’
+  818 |     mem_intr->nextReqTime = mem_intr->nextBurstAt - mem_intr->commandOffset();
+      |               ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:818:39: error: request for member ‘nextBurstAt’ in ‘* mem_intr’, which is of non-class type ‘int’
+  818 |     mem_intr->nextReqTime = mem_intr->nextBurstAt - mem_intr->commandOffset();
+      |                                       ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:818:63: error: request for member ‘commandOffset’ in ‘* mem_intr’, which is of non-class type ‘int’
+  818 |     mem_intr->nextReqTime = mem_intr->nextBurstAt - mem_intr->commandOffset();
+      |                                                               ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:822:22: error: request for member ‘readsThisTime’ in ‘* mem_intr’, which is of non-class type ‘int’
+  822 |         ++(mem_intr->readsThisTime);
+      |                      ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:824:9: error: ‘stats’ was not declared in this scope; did you mean ‘static’?
+  824 |         stats.requestorReadTotalLat[mem_pkt->requestorId()] +=
+      |         ^~~~~
+      |         static
+src/mem/pim_ctrl.cc:828:22: error: request for member ‘writesThisTime’ in ‘* mem_intr’, which is of non-class type ‘int’
+  828 |         ++(mem_intr->writesThisTime);
+      |                      ^~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:829:9: error: ‘stats’ was not declared in this scope; did you mean ‘static’?
+  829 |         stats.requestorWriteBytes[mem_pkt->requestorId()] += mem_pkt->size;
+      |         ^~~~~
+      |         static
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:838:1: error: ‘PIMCtrl’ has not been declared
+  838 | PIMCtrl::memBusy(PIMInterface* mem_intr) {
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:838:18: error: ‘PIMInterface’ was not declared in this scope; did you mean ‘NVMInterface’?
+  838 | PIMCtrl::memBusy(PIMInterface* mem_intr) {
+      |                  ^~~~~~~~~~~~
+      |                  NVMInterface
+src/mem/pim_ctrl.cc:838:32: error: ‘mem_intr’ was not declared in this scope
+  838 | PIMCtrl::memBusy(PIMInterface* mem_intr) {
+      |                                ^~~~~~~~
+src/mem/pim_ctrl.cc:859:1: error: ‘PIMCtrl’ has not been declared
+  859 | PIMCtrl::nvmWriteBlock(PIMInterface* mem_intr) {
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:859:24: error: ‘PIMInterface’ was not declared in this scope; did you mean ‘NVMInterface’?
+  859 | PIMCtrl::nvmWriteBlock(PIMInterface* mem_intr) {
+      |                        ^~~~~~~~~~~~
+      |                        NVMInterface
+src/mem/pim_ctrl.cc:859:38: error: ‘mem_intr’ was not declared in this scope
+  859 | PIMCtrl::nvmWriteBlock(PIMInterface* mem_intr) {
+      |                                      ^~~~~~~~
+src/mem/pim_ctrl.cc:866:1: error: ‘PIMCtrl’ has not been declared
+  866 | PIMCtrl::nonDetermReads(PIMInterface* mem_intr) {
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:866:1: error: variable or field ‘nonDetermReads’ declared void
+src/mem/pim_ctrl.cc:866:25: error: ‘PIMInterface’ was not declared in this scope; did you mean ‘NVMInterface’?
+  866 | PIMCtrl::nonDetermReads(PIMInterface* mem_intr) {
+      |                         ^~~~~~~~~~~~
+      |                         NVMInterface
+src/mem/pim_ctrl.cc:866:39: error: ‘mem_intr’ was not declared in this scope
+  866 | PIMCtrl::nonDetermReads(PIMInterface* mem_intr) {
+      |                                       ^~~~~~~~
+src/mem/pim_ctrl.cc:881:1: error: ‘PIMCtrl’ has not been declared
+  881 | PIMCtrl::processNextReqEvent(PIMInterface* mem_intr,
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:881:1: error: variable or field ‘processNextReqEvent’ declared void
+src/mem/pim_ctrl.cc:881:30: error: ‘PIMInterface’ was not declared in this scope; did you mean ‘NVMInterface’?
+  881 | PIMCtrl::processNextReqEvent(PIMInterface* mem_intr,
+      |                              ^~~~~~~~~~~~
+      |                              NVMInterface
+src/mem/pim_ctrl.cc:881:44: error: ‘mem_intr’ was not declared in this scope
+  881 | PIMCtrl::processNextReqEvent(PIMInterface* mem_intr,
+      |                                            ^~~~~~~~
+src/mem/pim_ctrl.cc:882:39: error: expected primary-expression before ‘&’ token
+  882 |                         MemPacketQueue& resp_queue,
+      |                                       ^
+src/mem/pim_ctrl.cc:882:41: error: ‘resp_queue’ was not declared in this scope
+  882 |                         MemPacketQueue& resp_queue,
+      |                                         ^~~~~~~~~~
+src/mem/pim_ctrl.cc:883:45: error: expected primary-expression before ‘&’ token
+  883 |                         EventFunctionWrapper& resp_event,
+      |                                             ^
+src/mem/pim_ctrl.cc:883:47: error: ‘resp_event’ was not declared in this scope; did you mean ‘sigevent’?
+  883 |                         EventFunctionWrapper& resp_event,
+      |                                               ^~~~~~~~~~
+      |                                               sigevent
+src/mem/pim_ctrl.cc:884:45: error: expected primary-expression before ‘&’ token
+  884 |                         EventFunctionWrapper& next_req_event,
+      |                                             ^
+src/mem/pim_ctrl.cc:884:47: error: ‘next_req_event’ was not declared in this scope
+  884 |                         EventFunctionWrapper& next_req_event,
+      |                                               ^~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:885:25: error: expected primary-expression before ‘bool’
+  885 |                         bool& retry_wr_req) {
+      |                         ^~~~
+src/mem/pim_ctrl.cc:1152:1: error: ‘PIMCtrl’ has not been declared
+ 1152 | PIMCtrl::packetReady(MemPacket* pkt, PIMInterface* mem_intr)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:1152:38: error: ‘PIMInterface’ has not been declared
+ 1152 | PIMCtrl::packetReady(MemPacket* pkt, PIMInterface* mem_intr)
+      |                                      ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc: In function ‘bool gem5::memory::packetReady(MemPacket*, int*)’:
+src/mem/pim_ctrl.cc:1154:22: error: request for member ‘burstReady’ in ‘* mem_intr’, which is of non-class type ‘int’
+ 1154 |     return mem_intr->burstReady(pkt);
+      |                      ^~~~~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1158:1: error: ‘PIMCtrl’ has not been declared
+ 1158 | PIMCtrl::minReadToWriteDataGap()
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::Tick gem5::memory::minReadToWriteDataGap()’:
+src/mem/pim_ctrl.cc:1160:12: error: ‘dram’ was not declared in this scope; did you mean ‘drem’?
+ 1160 |     return dram->minReadToWriteDataGap();
+      |            ^~~~
+      |            drem
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1164:1: error: ‘PIMCtrl’ has not been declared
+ 1164 | PIMCtrl::minWriteToReadDataGap()
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::Tick gem5::memory::minWriteToReadDataGap()’:
+src/mem/pim_ctrl.cc:1166:12: error: ‘dram’ was not declared in this scope; did you mean ‘drem’?
+ 1166 |     return dram->minWriteToReadDataGap();
+      |            ^~~~
+      |            drem
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1170:1: error: ‘PIMCtrl’ has not been declared
+ 1170 | PIMCtrl::burstAlign(Addr addr, PIMInterface* mem_intr) const
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:1170:32: error: ‘PIMInterface’ has not been declared
+ 1170 | PIMCtrl::burstAlign(Addr addr, PIMInterface* mem_intr) const
+      |                                ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1170:56: error: non-member function ‘gem5::Addr gem5::memory::burstAlign(gem5::Addr, int*)’ cannot have cv-qualifier
+ 1170 | PIMCtrl::burstAlign(Addr addr, PIMInterface* mem_intr) const
+      |                                                        ^~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::Addr gem5::memory::burstAlign(gem5::Addr, int*)’:
+src/mem/pim_ctrl.cc:1172:37: error: request for member ‘bytesPerBurst’ in ‘* mem_intr’, which is of non-class type ‘int’
+ 1172 |     return (addr & ~(Addr(mem_intr->bytesPerBurst() - 1)));
+      |                                     ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1176:1: error: ‘PIMCtrl’ has not been declared
+ 1176 | PIMCtrl::pktSizeCheck(MemPacket* mem_pkt, PIMInterface* mem_intr) const
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:1176:43: error: ‘PIMInterface’ has not been declared
+ 1176 | PIMCtrl::pktSizeCheck(MemPacket* mem_pkt, PIMInterface* mem_intr) const
+      |                                           ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1176:67: error: non-member function ‘bool gem5::memory::pktSizeCheck(MemPacket*, int*)’ cannot have cv-qualifier
+ 1176 | PIMCtrl::pktSizeCheck(MemPacket* mem_pkt, PIMInterface* mem_intr) const
+      |                                                                   ^~~~~
+src/mem/pim_ctrl.cc: In function ‘bool gem5::memory::pktSizeCheck(MemPacket*, int*)’:
+src/mem/pim_ctrl.cc:1178:40: error: request for member ‘bytesPerBurst’ in ‘* mem_intr’, which is of non-class type ‘int’
+ 1178 |     return (mem_pkt->size <= mem_intr->bytesPerBurst());
+      |                                        ^~~~~~~~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1181:1: error: ‘PIMCtrl’ does not name a type
+ 1181 | PIMCtrl::CtrlStats::CtrlStats(PIMCtrl &_ctrl)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:1279:1: error: ‘PIMCtrl’ has not been declared
+ 1279 | PIMCtrl::CtrlStats::regStats()
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘void gem5::memory::regStats()’:
+src/mem/pim_ctrl.cc:1283:12: error: ‘ctrl’ was not declared in this scope
+ 1283 |     assert(ctrl.system());
+      |            ^~~~
+src/mem/pim_ctrl.cc:1286:5: error: ‘avgRdQLen’ was not declared in this scope
+ 1286 |     avgRdQLen.precision(2);
+      |     ^~~~~~~~~
+src/mem/pim_ctrl.cc:1287:5: error: ‘avgWrQLen’ was not declared in this scope
+ 1287 |     avgWrQLen.precision(2);
+      |     ^~~~~~~~~
+src/mem/pim_ctrl.cc:1289:5: error: ‘readPktSize’ was not declared in this scope
+ 1289 |     readPktSize.init(ceilLog2(ctrl.system()->cacheLineSize()) + 1);
+      |     ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:1290:5: error: ‘writePktSize’ was not declared in this scope
+ 1290 |     writePktSize.init(ceilLog2(ctrl.system()->cacheLineSize()) + 1);
+      |     ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1292:5: error: ‘rdQLenPdf’ was not declared in this scope
+ 1292 |     rdQLenPdf.init(ctrl.readBufferSize);
+      |     ^~~~~~~~~
+src/mem/pim_ctrl.cc:1293:5: error: ‘wrQLenPdf’ was not declared in this scope
+ 1293 |     wrQLenPdf.init(ctrl.writeBufferSize);
+      |     ^~~~~~~~~
+src/mem/pim_ctrl.cc:1295:5: error: ‘rdPerTurnAround’ was not declared in this scope
+ 1295 |     rdPerTurnAround
+      |     ^~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1298:5: error: ‘wrPerTurnAround’ was not declared in this scope
+ 1298 |     wrPerTurnAround
+      |     ^~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1302:5: error: ‘avgRdBWSys’ was not declared in this scope
+ 1302 |     avgRdBWSys.precision(8);
+      |     ^~~~~~~~~~
+src/mem/pim_ctrl.cc:1303:5: error: ‘avgWrBWSys’ was not declared in this scope
+ 1303 |     avgWrBWSys.precision(8);
+      |     ^~~~~~~~~~
+src/mem/pim_ctrl.cc:1304:5: error: ‘avgGap’ was not declared in this scope
+ 1304 |     avgGap.precision(2);
+      |     ^~~~~~
+src/mem/pim_ctrl.cc:1307:5: error: ‘requestorReadBytes’ was not declared in this scope
+ 1307 |     requestorReadBytes
+      |     ^~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1311:5: error: ‘requestorWriteBytes’ was not declared in this scope
+ 1311 |     requestorWriteBytes
+      |     ^~~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1316:5: error: ‘requestorReadRate’ was not declared in this scope
+ 1316 |     requestorReadRate
+      |     ^~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1320:5: error: ‘requestorReadAccesses’ was not declared in this scope
+ 1320 |     requestorReadAccesses
+      |     ^~~~~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1324:5: error: ‘requestorWriteAccesses’ was not declared in this scope
+ 1324 |     requestorWriteAccesses
+      |     ^~~~~~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1328:5: error: ‘requestorReadTotalLat’ was not declared in this scope
+ 1328 |     requestorReadTotalLat
+      |     ^~~~~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1332:5: error: ‘requestorReadAvgLat’ was not declared in this scope
+ 1332 |     requestorReadAvgLat
+      |     ^~~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1336:5: error: ‘requestorWriteRate’ was not declared in this scope
+ 1336 |     requestorWriteRate
+      |     ^~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1340:5: error: ‘requestorWriteTotalLat’ was not declared in this scope
+ 1340 |     requestorWriteTotalLat
+      |     ^~~~~~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1344:5: error: ‘requestorWriteAvgLat’ was not declared in this scope
+ 1344 |     requestorWriteAvgLat
+      |     ^~~~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1363:19: error: ‘bytesReadSys’ was not declared in this scope
+ 1363 |     avgRdBWSys = (bytesReadSys) / simSeconds;
+      |                   ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1364:19: error: ‘bytesWrittenSys’ was not declared in this scope
+ 1364 |     avgWrBWSys = (bytesWrittenSys) / simSeconds;
+      |                   ^~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1366:14: error: ‘totGap’ was not declared in this scope
+ 1366 |     avgGap = totGap / (readReqs + writeReqs);
+      |              ^~~~~~
+src/mem/pim_ctrl.cc:1366:24: error: ‘readReqs’ was not declared in this scope
+ 1366 |     avgGap = totGap / (readReqs + writeReqs);
+      |                        ^~~~~~~~
+src/mem/pim_ctrl.cc:1366:35: error: ‘writeReqs’ was not declared in this scope
+ 1366 |     avgGap = totGap / (readReqs + writeReqs);
+      |                                   ^~~~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1375:1: error: ‘PIMCtrl’ has not been declared
+ 1375 | PIMCtrl::recvFunctional(PacketPtr pkt)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘void gem5::memory::recvFunctional(gem5::PacketPtr)’:
+src/mem/pim_ctrl.cc:1377:43: error: ‘dram’ was not declared in this scope; did you mean ‘drem’?
+ 1377 |     bool found = recvFunctionalLogic(pkt, dram);
+      |                                           ^~~~
+      |                                           drem
+src/mem/pim_ctrl.cc:1377:18: error: ‘recvFunctionalLogic’ was not declared in this scope; did you mean ‘recvFunctional’?
+ 1377 |     bool found = recvFunctionalLogic(pkt, dram);
+      |                  ^~~~~~~~~~~~~~~~~~~
+      |                  recvFunctional
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1384:1: error: ‘PIMCtrl’ has not been declared
+ 1384 | PIMCtrl::recvMemBackdoorReq(const MemBackdoorReq &req,
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘void gem5::memory::recvMemBackdoorReq(const gem5::MemBackdoorReq&, gem5::MemBackdoor*&)’:
+src/mem/pim_ctrl.cc:1387:15: error: ‘dram’ was not declared in this scope; did you mean ‘drem’?
+ 1387 |     panic_if(!dram->getAddrRange().contains(req.range().start()),
+      |               ^~~~
+src/base/compiler.hh:80:49: note: in definition of macro ‘GEM5_UNLIKELY’
+   80 | #define GEM5_UNLIKELY(cond) __builtin_expect(!!(cond), 0)
+      |                                                 ^~~~
+src/mem/pim_ctrl.cc:1387:5: note: in expansion of macro ‘panic_if’
+ 1387 |     panic_if(!dram->getAddrRange().contains(req.range().start()),
+      |     ^~~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1395:1: error: ‘PIMCtrl’ has not been declared
+ 1395 | PIMCtrl::recvFunctionalLogic(PacketPtr pkt, PIMInterface* mem_intr)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:1395:45: error: ‘PIMInterface’ has not been declared
+ 1395 | PIMCtrl::recvFunctionalLogic(PacketPtr pkt, PIMInterface* mem_intr)
+      |                                             ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc: In function ‘bool gem5::memory::recvFunctionalLogic(gem5::PacketPtr, int*)’:
+src/mem/pim_ctrl.cc:1397:19: error: request for member ‘getAddrRange’ in ‘* mem_intr’, which is of non-class type ‘int’
+ 1397 |     if (mem_intr->getAddrRange().contains(pkt->getAddr())) {
+      |                   ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1399:19: error: request for member ‘functionalAccess’ in ‘* mem_intr’, which is of non-class type ‘int’
+ 1399 |         mem_intr->functionalAccess(pkt);
+      |                   ^~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1407:1: error: ‘PIMCtrl’ has not been declared
+ 1407 | PIMCtrl::getPort(const std::string &if_name, PortID idx)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::Port& gem5::memory::getPort(const std::string&, gem5::PortID)’:
+src/mem/pim_ctrl.cc:1410:21: error: ‘gem5::memory::qos::PIMCtrl’ has not been declared
+ 1410 |         return qos::PIMCtrl::getPort(if_name, idx);
+      |                     ^~~~~~~
+src/mem/pim_ctrl.cc:1412:16: error: ‘port’ was not declared in this scope; did you mean ‘Port’?
+ 1412 |         return port;
+      |                ^~~~
+      |                Port
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1417:1: error: ‘PIMCtrl’ has not been declared
+ 1417 | PIMCtrl::allIntfDrained() const
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:1417:27: error: non-member function ‘bool gem5::memory::allIntfDrained()’ cannot have cv-qualifier
+ 1417 | PIMCtrl::allIntfDrained() const
+      |                           ^~~~~
+src/mem/pim_ctrl.cc: In function ‘bool gem5::memory::allIntfDrained()’:
+src/mem/pim_ctrl.cc:1422:11: error: ‘dram’ was not declared in this scope; did you mean ‘drem’?
+ 1422 |    return dram->allRanksDrained();
+      |           ^~~~
+      |           drem
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1426:1: error: ‘PIMCtrl’ has not been declared
+ 1426 | PIMCtrl::drain()
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::DrainState gem5::memory::drain()’:
+src/mem/pim_ctrl.cc:1430:9: error: ‘totalWriteQueueSize’ was not declared in this scope
+ 1430 |     if (totalWriteQueueSize || totalReadQueueSize || !respQEmpty() ||
+      |         ^~~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1430:32: error: ‘totalReadQueueSize’ was not declared in this scope
+ 1430 |     if (totalWriteQueueSize || totalReadQueueSize || !respQEmpty() ||
+      |                                ^~~~~~~~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1430:55: error: ‘respQEmpty’ was not declared in this scope
+ 1430 |     if (totalWriteQueueSize || totalReadQueueSize || !respQEmpty() ||
+      |                                                       ^~~~~~~~~~
+src/mem/pim_ctrl.cc:1434:17: error: ‘respQueue’ was not declared in this scope
+ 1434 |                 respQueue.size());
+      |                 ^~~~~~~~~
+src/base/trace.hh:212:44: note: in definition of macro ‘DPRINTF’
+  212 |             ::gem5::curTick(), name(), #x, __VA_ARGS__); \
+      |                                            ^~~~~~~~~~~
+src/mem/pim_ctrl.cc:1438:37: error: ‘nextReqEvent’ was not declared in this scope
+ 1438 |         if (totalWriteQueueSize && !nextReqEvent.scheduled()) {
+      |                                     ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1440:13: error: ‘schedule’ was not declared in this scope
+ 1440 |             schedule(nextReqEvent, curTick());
+      |             ^~~~~~~~
+src/mem/pim_ctrl.cc:1443:9: error: ‘dram’ was not declared in this scope; did you mean ‘drem’?
+ 1443 |         dram->drainRanks();
+      |         ^~~~
+      |         drem
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1452:1: error: ‘PIMCtrl’ has not been declared
+ 1452 | PIMCtrl::drainResume()
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘void gem5::memory::drainResume()’:
+src/mem/pim_ctrl.cc:1454:10: error: ‘isTimingMode’ was not declared in this scope
+ 1454 |     if (!isTimingMode && system()->isTimingMode()) {
+      |          ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1454:32: error: too few arguments to function ‘int system(const char*)’
+ 1454 |     if (!isTimingMode && system()->isTimingMode()) {
+      |                          ~~~~~~^~
+/usr/include/stdlib.h:923:12: note: declared here
+  923 | extern int system (const char *__command) __wur;
+      |            ^~~~~~
+src/mem/pim_ctrl.cc:1458:9: error: ‘dram’ was not declared in this scope; did you mean ‘drem’?
+ 1458 |         dram->startup();
+      |         ^~~~
+      |         drem
+src/mem/pim_ctrl.cc:1459:39: error: too few arguments to function ‘int system(const char*)’
+ 1459 |     } else if (isTimingMode && !system()->isTimingMode()) {
+      |                                 ~~~~~~^~
+/usr/include/stdlib.h:923:12: note: declared here
+  923 | extern int system (const char *__command) __wur;
+      |            ^~~~~~
+src/mem/pim_ctrl.cc:1462:9: error: ‘dram’ was not declared in this scope; did you mean ‘drem’?
+ 1462 |         dram->suspend();
+      |         ^~~~
+      |         drem
+src/mem/pim_ctrl.cc:1466:5: error: ‘isTimingMode’ was not declared in this scope
+ 1466 |     isTimingMode = system()->isTimingMode();
+      |     ^~~~~~~~~~~~
+src/mem/pim_ctrl.cc:1466:26: error: too few arguments to function ‘int system(const char*)’
+ 1466 |     isTimingMode = system()->isTimingMode();
+      |                    ~~~~~~^~
+/usr/include/stdlib.h:923:12: note: declared here
+  923 | extern int system (const char *__command) __wur;
+      |            ^~~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1470:1: error: ‘PIMCtrl’ has not been declared
+ 1470 | PIMCtrl::getAddrRanges()
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::AddrRangeList gem5::memory::getAddrRanges()’:
+src/mem/pim_ctrl.cc:1473:21: error: ‘dram’ was not declared in this scope; did you mean ‘drem’?
+ 1473 |     range.push_back(dram->getAddrRange());
+      |                     ^~~~
+      |                     drem
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1477:1: error: ‘PIMCtrl’ does not name a type
+ 1477 | PIMCtrl::MemoryPort::
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:1484:1: error: ‘PIMCtrl’ has not been declared
+ 1484 | PIMCtrl::MemoryPort::getAddrRanges() const
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:1484:38: error: non-member function ‘gem5::AddrRangeList gem5::memory::getAddrRanges()’ cannot have cv-qualifier
+ 1484 | PIMCtrl::MemoryPort::getAddrRanges() const
+      |                                      ^~~~~
+src/mem/pim_ctrl.cc:1484:1: error: redefinition of ‘gem5::AddrRangeList gem5::memory::getAddrRanges()’
+ 1484 | PIMCtrl::MemoryPort::getAddrRanges() const
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:1470:1: note: ‘gem5::AddrRangeList gem5::memory::getAddrRanges()’ previously defined here
+ 1470 | PIMCtrl::getAddrRanges()
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::AddrRangeList gem5::memory::getAddrRanges()’:
+src/mem/pim_ctrl.cc:1486:12: error: ‘ctrl’ was not declared in this scope
+ 1486 |     return ctrl.getAddrRanges();
+      |            ^~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1490:1: error: ‘PIMCtrl’ has not been declared
+ 1490 | PIMCtrl::MemoryPort::recvFunctional(PacketPtr pkt)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:1490:1: error: redefinition of ‘void gem5::memory::recvFunctional(gem5::PacketPtr)’
+src/mem/pim_ctrl.cc:1375:1: note: ‘void gem5::memory::recvFunctional(gem5::PacketPtr)’ previously defined here
+ 1375 | PIMCtrl::recvFunctional(PacketPtr pkt)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘void gem5::memory::recvFunctional(gem5::PacketPtr)’:
+src/mem/pim_ctrl.cc:1492:20: error: ‘ctrl’ was not declared in this scope
+ 1492 |     pkt->pushLabel(ctrl.name());
+      |                    ^~~~
+src/mem/pim_ctrl.cc:1494:10: error: ‘queue’ was not declared in this scope
+ 1494 |     if (!queue.trySatisfyFunctional(pkt)) {
+      |          ^~~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1510:1: error: ‘PIMCtrl’ has not been declared
+ 1510 | PIMCtrl::MemoryPort::recvMemBackdoorReq(const MemBackdoorReq &req,
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:1510:1: error: redefinition of ‘void gem5::memory::recvMemBackdoorReq(const gem5::MemBackdoorReq&, gem5::MemBackdoor*&)’
+src/mem/pim_ctrl.cc:1384:1: note: ‘void gem5::memory::recvMemBackdoorReq(const gem5::MemBackdoorReq&, gem5::MemBackdoor*&)’ previously defined here
+ 1384 | PIMCtrl::recvMemBackdoorReq(const MemBackdoorReq &req,
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘void gem5::memory::recvMemBackdoorReq(const gem5::MemBackdoorReq&, gem5::MemBackdoor*&)’:
+src/mem/pim_ctrl.cc:1513:5: error: ‘ctrl’ was not declared in this scope
+ 1513 |     ctrl.recvMemBackdoorReq(req, backdoor);
+      |     ^~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1517:1: error: ‘PIMCtrl’ has not been declared
+ 1517 | PIMCtrl::MemoryPort::recvAtomic(PacketPtr pkt)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:1517:1: error: redefinition of ‘gem5::Tick gem5::memory::recvAtomic(gem5::PacketPtr)’
+src/mem/pim_ctrl.cc:125:1: note: ‘gem5::Tick gem5::memory::recvAtomic(gem5::PacketPtr)’ previously defined here
+  125 | PIMCtrl::recvAtomic(PacketPtr pkt)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::Tick gem5::memory::recvAtomic(gem5::PacketPtr)’:
+src/mem/pim_ctrl.cc:1519:12: error: ‘ctrl’ was not declared in this scope
+ 1519 |     return ctrl.recvAtomic(pkt);
+      |            ^~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1523:1: error: ‘PIMCtrl’ has not been declared
+ 1523 | PIMCtrl::MemoryPort::recvAtomicBackdoor(
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:1523:1: error: redefinition of ‘gem5::Tick gem5::memory::recvAtomicBackdoor(gem5::PacketPtr, gem5::MemBackdoor*&)’
+src/mem/pim_ctrl.cc:158:1: note: ‘gem5::Tick gem5::memory::recvAtomicBackdoor(gem5::PacketPtr, gem5::MemBackdoor*&)’ previously defined here
+  158 | PIMCtrl::recvAtomicBackdoor(PacketPtr pkt, MemBackdoorPtr &backdoor)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘gem5::Tick gem5::memory::recvAtomicBackdoor(gem5::PacketPtr, gem5::MemBackdoor*&)’:
+src/mem/pim_ctrl.cc:1526:12: error: ‘ctrl’ was not declared in this scope
+ 1526 |     return ctrl.recvAtomicBackdoor(pkt, backdoor);
+      |            ^~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1530:1: error: ‘PIMCtrl’ has not been declared
+ 1530 | PIMCtrl::MemoryPort::recvTimingReq(PacketPtr pkt)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc:1530:1: error: redefinition of ‘bool gem5::memory::recvTimingReq(gem5::PacketPtr)’
+src/mem/pim_ctrl.cc:407:1: note: ‘bool gem5::memory::recvTimingReq(gem5::PacketPtr)’ previously defined here
+  407 | PIMCtrl::recvTimingReq(PacketPtr pkt)
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘bool gem5::memory::recvTimingReq(gem5::PacketPtr)’:
+src/mem/pim_ctrl.cc:1533:12: error: ‘ctrl’ was not declared in this scope
+ 1533 |     return ctrl.recvTimingReq(pkt);
+      |            ^~~~
+src/mem/pim_ctrl.cc: At global scope:
+src/mem/pim_ctrl.cc:1537:1: error: ‘PIMCtrl’ has not been declared
+ 1537 | PIMCtrl::MemoryPort::disableSanityCheck()
+      | ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘void gem5::memory::disableSanityCheck()’:
+src/mem/pim_ctrl.cc:1539:5: error: ‘queue’ was not declared in this scope
+ 1539 |     queue.disableSanityCheck();
+      |     ^~~~~
+In file included from build/X86/python/_m5/param_PIMCtrl.cc:20:
+src/mem/mem_interface.hh:114:5: error: ‘MemCtrl’ does not name a type
+  114 |     MemCtrl* ctrl;
+      |     ^~~~~~~
+src/mem/mem_interface.hh:209:5: error: ‘MemCtrl’ does not name a type
+  209 |     MemCtrl::BusState busState = MemCtrl::READ;
+      |     ^~~~~~~
+src/mem/mem_interface.hh:212:5: error: ‘MemCtrl’ does not name a type
+  212 |     MemCtrl::BusState busStateNext = MemCtrl::READ;
+      |     ^~~~~~~
+src/mem/mem_interface.hh:226:18: error: ‘MemCtrl’ has not been declared
+  226 |     void setCtrl(MemCtrl* _ctrl, unsigned int command_window,
+      |                  ^~~~~~~
+src/mem/pim_ctrl.cc: In function ‘bool gem5::memory::recvFunctionalLogic(gem5::PacketPtr, int*)’:
+src/mem/pim_ctrl.cc:1404:1: warning: control reaches end of non-void function [-Wreturn-type]
+ 1404 | }
+      | ^
+src/mem/pim_ctrl.cc: In function ‘gem5::DrainState gem5::memory::drain()’:
+src/mem/pim_ctrl.cc:1449:1: warning: control reaches end of non-void function [-Wreturn-type]
+ 1449 | }
+      | ^
+scons: *** [build/X86/mem/pim_ctrl.o] Error 1
+scons: *** [build/X86/python/_m5/param_PIMCtrl.o] Error 1
+scons: building terminated because of errors.

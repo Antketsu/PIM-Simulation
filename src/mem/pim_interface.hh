@@ -134,6 +134,10 @@ class PIMInterface : public DRAMInterface
   public:
     PIMInterface(const PIMInterfaceParams &_p);
     void access(PacketPtr pkt);
+    /*std::pair<Tick, Tick>
+    doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
+                  const std::vector<MemPacketQueue>& queue)
+                  override;*/
     void incrementPC();
     void decrementPC(uint8_t stride);
     void deactivatePIMMode();

@@ -24,7 +24,13 @@ PIMInterface::PIMInterface(const PIMInterfaceParams &_p)
       pim_mode(false),
       single_bank_mode(true),
       pim_range_start(_p.pim_range_start)
-{}
+{
+    DPRINTF(PIM,
+            "Initialized PIMInterface with CRF entries %d, GRF entries %d, "
+            "SRF entries %d, SIMD width %d, PIM range start %#x\n",
+            crf_entries, grf_entries, srf_entries, simd_width,
+            pim_range_start);
+}
 
 int16_t *
 PIMInterface::getVector(Operand op_type, uint32_t op_idx, PacketPtr pkt)
@@ -125,6 +131,8 @@ PIMInterface::getSIMDWidth()
 void
 PIMInterface::access(PacketPtr pkt)
 {
+    DPRINTF(PIM, "PIMInterface::access called with addr 0x%x, pim_mode=%d\n",
+            pkt->getAddr(), pim_mode);
     if (pim_mode) {
         DPRINTF(PIM, "PIM mode active, executing kernel\n");
         executeKernel(pkt);
@@ -143,6 +151,13 @@ PIMInterface::access(PacketPtr pkt)
                                             simd_width * 2); // 16 bits
                                                              // per vector
                                                              // element
+        DPRINTF(PIM,
+                "Address ranges - pim_range_start: 0x%x, "
+                "crf_range: [0x%x-0x%x], srf_range: [0x%x-0x%x], "
+                "grf_range: [0x%x-0x%x], addr: 0x%x\n",
+                pim_range_start, crf_range.start(), crf_range.end(),
+                srf_range.start(), srf_range.end(), grf_range.start(),
+                grf_range.end(), addr);
         if (addr == pim_range_start) {
             // Access PIM mode register
             pim_mode = true;
@@ -177,6 +192,8 @@ PIMInterface::access(PacketPtr pkt)
                     idx);
         } else if (grf_range.contains(addr)) {
             // TO-DO: Access GRF
+            DPRINTF(PIM, "Access to GRF at address %#x not implemented yet\n",
+                    addr);
         } else {
             // Address is not in PIM range, access normal DRAM
             DPRINTF(PIM, "Normal DRAM access at address %#x\n", addr);
@@ -184,6 +201,84 @@ PIMInterface::access(PacketPtr pkt)
         }
     }
 }
+
+/*
+std::pair<Tick, Tick>
+PIMInterface::doBurstAccess(MemPacket* pkt, Tick next_burst_at,
+                const std::vector<MemPacketQueue>& queue)
+{
+    DPRINTF(PIM, "PIMInterface::access called with addr 0x%x, pim_mode=%d\n",
+            pkt->getAddr(), pim_mode);
+    if (pim_mode) {
+        DPRINTF(PIM, "PIM mode active, executing kernel\n");
+        executeKernel(pkt);
+    } else {
+        Addr addr = pkt->getAddr();
+        // skip pim and single bank registers, 32 bits per CRF entry,
+        AddrRange crf_range =
+            AddrRange(pim_range_start + 2, pim_range_start + crf.size() * 4);
+        AddrRange srf_range =
+            AddrRange(crf_range.end(),
+                      crf_range.end() + (srf_m.size() + srf_a.size()) *
+                                            2); // 16 bits per scalar register
+        AddrRange grf_range =
+            AddrRange(srf_range.end(),
+                      srf_range.end() + (grf_a.size() + grf_b.size()) *
+                                            simd_width * 2); // 16 bits
+                                                             // per vector
+                                                             // element
+        DPRINTF(PIM, "Address ranges - pim_range_start: 0x%x, "
+                     "crf_range: [0x%x-0x%x], srf_range: [0x%x-0x%x], "
+                     "grf_range: [0x%x-0x%x], addr: 0x%x\n",
+                pim_range_start, crf_range.start(), crf_range.end(),
+                srf_range.start(), srf_range.end(),
+                grf_range.start(), grf_range.end(), addr);
+        if (addr == pim_range_start) {
+            // Access PIM mode register
+            pim_mode = true;
+            DPRINTF(PIM, "Entering PIM mode\n");
+        } else if (addr == pim_range_start + 1) {
+            // Access single bank mode register
+            single_bank_mode = !single_bank_mode;
+            DPRINTF(PIM, "Setting single bank mode to %d\n", single_bank_mode);
+        } else if (crf_range.contains(addr)) {
+            // Access CRF
+            int idx = (addr - crf_range.start()) / 4;
+            uint32_t raw_instr = *(pkt->getConstPtr<uint32_t>());
+            crf[idx] = format_instruction(raw_instr);
+            DPRINTF(PIM, "Loaded instruction %s into CRF index %d\n",
+                    crf[idx].getType(), idx);
+        } else if (srf_range.contains(addr)) {
+            // Access SRF
+            int idx = (addr - srf_range.start()) / 2;
+            uint16_t val = *(pkt->getConstPtr<uint16_t>());
+            if (idx < srf_m.size()) {
+                for (int i = 0; i < simd_width; ++i) {
+                    srf_m[idx][i] = val;
+                }
+            } else {
+                for (int i = 0; i < simd_width; ++i) {
+                    srf_a[idx - srf_m.size()][i] = val;
+                }
+            }
+            DPRINTF(PIM, "Loaded value %d into SRF index %d\n",
+                    (idx < srf_m.size()) ? srf_m[idx][0]
+                                         : srf_a[idx - srf_m.size()][0],
+                    idx);
+        } else if (grf_range.contains(addr)) {
+            // TO-DO: Access GRF
+            DPRINTF(PIM, "Access to GRF at address %#x not implemented yet\n",
+                    addr);
+        } else {
+            // Address is not in PIM range, access normal DRAM
+            DPRINTF(PIM, "Normal DRAM access at address %#x\n", addr);
+            DRAMInterface::access(pkt);
+        }
+    }
+    return DRAMInterface::doBurstAccess(mem_pkt, next_burst_at, queue);
+}
+*/
+
 void
 PIMInterface::executeKernel(PacketPtr pkt)
 {
