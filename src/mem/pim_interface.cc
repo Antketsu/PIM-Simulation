@@ -11,7 +11,7 @@ PIMInterface::PIMInterface(const PIMInterfaceParams &_p)
       grf_entries(_p.grf_entries),
       srf_entries(_p.srf_entries),
       simd_width(_p.simd_width),
-      crf(std::vector<PIMInstruction>(_p.crf_entries)),
+      crf(std::vector<PIMInstruction *>(crf_entries, NULL)),
       grf_a(std::vector<std::vector<int16_t>>(
           _p.grf_entries / 2, std::vector<int16_t>(_p.simd_width))),
       grf_b(std::vector<std::vector<int16_t>>(
@@ -30,6 +30,13 @@ PIMInterface::PIMInterface(const PIMInterfaceParams &_p)
             "SRF entries %d, SIMD width %d, PIM range start %#x\n",
             crf_entries, grf_entries, srf_entries, simd_width,
             pim_range_start);
+}
+
+PIMInterface::~PIMInterface()
+{
+    for (auto &instr : crf) {
+        delete instr;
+    }
 }
 
 int16_t *
@@ -52,9 +59,10 @@ PIMInterface::getVector(Operand op_type, uint32_t op_idx, PacketPtr pkt)
             panic("Unknown operand type %d for getVector\n", op_type);
     }
 }
-PIMInterface::PIMInstruction
+PIMInterface::PIMInstruction *
 PIMInterface::format_instruction(uint32_t raw_instr)
 {
+    DPRINTF(PIM, "Formatting raw instruction 0x%x\n", raw_instr);
     // OPCode: [31:28]
     PIMInstructionType type =
         (PIMInstructionType)((raw_instr & ~0x0FFFFFFF) >> 28);
@@ -66,7 +74,7 @@ PIMInterface::format_instruction(uint32_t raw_instr)
                 "Formatted control instruction type %d "
                 "imm0 %d imm1 %d\n",
                 type, imm0, imm1);
-        return ControlInstruction(type, imm0, imm1);
+        return new ControlInstruction(type, imm0, imm1);
     } else if (type == MOV) { // Data
         // DEST: [27:25] SRC0: [24:22] R: 12 DST_IDX: [10:8] SRC0_IDX: [6:4]
         Operand dest = (Operand)((raw_instr & ~0xF1FFFFFF) >> 25);
@@ -78,7 +86,8 @@ PIMInterface::format_instruction(uint32_t raw_instr)
                 "Formatted data instruction type %d "
                 "dest %d dest_idx %d src0 %d src0_idx %d do_relu %d\n",
                 type, dest, dest_idx, src0, src0_idx, do_relu);
-        return DataInstruction(type, dest, dest_idx, src0, src0_idx, do_relu);
+        return new DataInstruction(type, dest, dest_idx, src0, src0_idx,
+                                   do_relu);
     } else if (type == ADD || type == MUL || type == MAD ||
                type == MAC) { // ALU
         // DEST: [27:25] SRC0: [24:22] SRC1: [21:19]
@@ -96,8 +105,8 @@ PIMInterface::format_instruction(uint32_t raw_instr)
                 "src1 %d src1_idx %d src2 %d src2_idx %d\n",
                 type, dest, dest_idx, src0, src0_idx, src1, src1_idx, src2,
                 src1_idx);
-        return ALUInstruction(type, dest, dest_idx, src0, src0_idx, src1,
-                              src1_idx, src2);
+        return new ALUInstruction(type, dest, dest_idx, src0, src0_idx, src1,
+                                  src1_idx, src2);
     } else {
         panic("Unknown instruction type %d\n", type);
     }
@@ -140,7 +149,7 @@ PIMInterface::access(PacketPtr pkt)
         Addr addr = pkt->getAddr();
         // skip pim and single bank registers, 32 bits per CRF entry,
         AddrRange crf_range =
-            AddrRange(pim_range_start + 2, pim_range_start + crf.size() * 4);
+            AddrRange(pim_range_start + 2, pim_range_start + crf_entries * 4);
         AddrRange srf_range =
             AddrRange(crf_range.end(),
                       crf_range.end() + (srf_m.size() + srf_a.size()) *
@@ -172,7 +181,7 @@ PIMInterface::access(PacketPtr pkt)
             uint32_t raw_instr = *(pkt->getConstPtr<uint32_t>());
             crf[idx] = format_instruction(raw_instr);
             DPRINTF(PIM, "Loaded instruction %s into CRF index %d\n",
-                    crf[idx].getType(), idx);
+                    crf[idx]->getType(), idx);
         } else if (srf_range.contains(addr)) {
             // Access SRF
             int idx = (addr - srf_range.start()) / 2;
@@ -288,8 +297,7 @@ PIMInterface::executeKernel(PacketPtr pkt)
     }
     DPRINTF(PIM, "Starting kernel execution\n");
     while (pim_mode) {
-        PIMInstruction &instr = crf[pc];
-        instr.exec(pkt, this);
+        crf[pc]->exec(pkt, this);
     }
 }
 

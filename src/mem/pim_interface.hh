@@ -5,6 +5,7 @@
 
 #ifndef __PIM_INTERFACE_HH__
 #define __PIM_INTERFACE_HH__
+#include <memory>
 #include <vector>
 #include "debug/PIM.hh"
 #include "mem/dram_interface.hh"
@@ -105,7 +106,7 @@ class PIMInterface : public DRAMInterface
     /*
      * Accelerator registers
      */
-    std::vector<PIMInstruction> crf;        // instruction register file
+    std::vector<PIMInstruction *> crf;      // instruction register file
     std::vector<SIMD_vector> grf_a;         // vector register file
     std::vector<SIMD_vector> grf_b;         // vector register file
     std::vector<SIMD_vector> srf_m; // scalar add register file, it replicates
@@ -128,7 +129,7 @@ class PIMInterface : public DRAMInterface
     Addr pim_range_start;
 
     int16_t *getVector(Operand op_type, uint32_t op_idx, PacketPtr pkt);
-    PIMInstruction format_instruction(uint32_t raw_instr);
+    PIMInstruction *format_instruction(uint32_t raw_instr);
     void executeKernel(PacketPtr pkt);
 
   public:
@@ -142,6 +143,7 @@ class PIMInterface : public DRAMInterface
     void decrementPC(uint8_t stride);
     void deactivatePIMMode();
     uint8_t getSIMDWidth();
+    ~PIMInterface();
 };
 
 } // namespace memory
