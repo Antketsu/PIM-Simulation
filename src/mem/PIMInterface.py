@@ -17,7 +17,7 @@ class PIMInterface(DRAMInterface):
         16, "Number of entries in the scalar register file"
     )
     simd_width = Param.Unsigned(
-        8, "Number of elements processed in parallel in SIMD operations"
+        16, "Number of elements processed in parallel in SIMD operations"
     )
     # By default 4GB
     pim_range_start = Param.Addr(
