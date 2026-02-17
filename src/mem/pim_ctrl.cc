@@ -39,5 +39,50 @@ PIMCtrl::recvAtomic(PacketPtr pkt)
     return 0;
 }
 
+void
+PIMCtrl::accessAndRespond(PacketPtr pkt, Tick static_latency,
+                          MemInterface *mem_intr)
+{
+    DPRINTF(PIMCtrl, "Responding to Address %#x.. \n", pkt->getAddr());
+
+    bool needsResponse = pkt->needsResponse();
+    // do the actual memory access which also turns the packet into a
+    // response
+    panic_if(!mem_intr->getAddrRange().contains(pkt->getAddr()),
+             "Can't handle address range for packet %s\n", pkt->print());
+
+    PIMInterface *pim_intr = dynamic_cast<PIMInterface *>(mem_intr);
+    assert(pim_intr != nullptr);
+    // do the actual memory access and turn the packet into a response
+    pim_intr->access(pkt);
+    mem_intr->access(pkt);
+
+    // turn packet around to go back to requestor if response expected
+    if (needsResponse) {
+        // access already turned the packet into a response
+        assert(pkt->isResponse());
+        // response_time consumes the static latency and is charged also
+        // with headerDelay that takes into account the delay provided by
+        // the xbar and also the payloadDelay that takes into account the
+        // number of data beats.
+        Tick response_time =
+            curTick() + static_latency + pkt->headerDelay + pkt->payloadDelay;
+        // Here we reset the timing of the packet before sending it out.
+        pkt->headerDelay = pkt->payloadDelay = 0;
+
+        // queue the packet in the response queue to be sent out after
+        // the static latency has passed
+        port.schedTimingResp(pkt, response_time);
+    } else {
+        // @todo the packet is going to be deleted, and the MemPacket
+        // is still having a pointer to it
+        pendingDelete.reset(pkt);
+    }
+
+    DPRINTF(PIMCtrl, "Done\n");
+
+    return;
+}
+
 } // namespace memory
 } // namespace gem5

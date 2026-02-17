@@ -14,6 +14,8 @@ class PIMCtrl : public MemCtrl
 {
   protected:
     Tick recvAtomic(PacketPtr pkt) override;
+    void accessAndRespond(PacketPtr pkt, Tick static_latency,
+                          MemInterface *mem_intr) override;
 
   public:
     PIMCtrl(const PIMCtrlParams &p);

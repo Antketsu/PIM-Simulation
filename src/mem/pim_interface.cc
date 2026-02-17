@@ -161,13 +161,6 @@ PIMInterface::access(PacketPtr pkt)
                                             simd_width * 2); // 16 bits
                                                              // per vector
                                                              // element
-        DPRINTF(PIM,
-                "Address ranges - pim_range_start: 0x%x, "
-                "crf_range: [0x%x-0x%x], srf_range: [0x%x-0x%x], "
-                "grf_range: [0x%x-0x%x], addr: 0x%x\n",
-                pim_range_start, crf_range.start(), crf_range.end(),
-                srf_range.start(), srf_range.end(), grf_range.start(),
-                grf_range.end(), addr);
         if (addr == pim_range_start) {
             // Access PIM mode register
             pim_mode = true;
@@ -223,7 +216,6 @@ PIMInterface::executeKernel(PacketPtr pkt)
         panic("Program counter %d exceeds instruction register file size %d\n",
               pc, crf.size());
     }
-    DPRINTF(PIM, "Starting kernel execution\n");
     if (pim_mode) {
         DPRINTF(PIM, "Executing instruction %d\n", pc);
         crf[pc]->exec(pkt, this);
@@ -274,7 +266,10 @@ PIMInterface::ControlInstruction::exec(PacketPtr pkt, PIMInterface *pim)
             break;
         case JUMP:
             if (imm1 > 0) {
-                pim->decrementPC(imm1);
+                pim->decrementPC(imm0);
+                --imm1;
+            } else {
+                pim->incrementPC();
             }
             break;
         case EXIT:
