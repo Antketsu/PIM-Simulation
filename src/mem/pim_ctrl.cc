@@ -55,7 +55,6 @@ PIMCtrl::accessAndRespond(PacketPtr pkt, Tick static_latency,
     assert(pim_intr != nullptr);
     // do the actual memory access and turn the packet into a response
     pim_intr->access(pkt);
-    mem_intr->access(pkt);
 
     // turn packet around to go back to requestor if response expected
     if (needsResponse) {
