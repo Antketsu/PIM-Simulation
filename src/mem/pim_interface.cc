@@ -149,8 +149,8 @@ PIMInterface::access(PacketPtr pkt)
     } else {
         Addr addr = pkt->getAddr();
         // skip pim and single bank registers, 32 bits per CRF entry,
-        AddrRange crf_range =
-            AddrRange(pim_range_start + 2, pim_range_start + crf_entries * 4);
+        AddrRange crf_range = AddrRange(pim_range_start + 4,
+                                        pim_range_start + 4 + crf_entries * 4);
         AddrRange srf_range =
             AddrRange(crf_range.end(),
                       crf_range.end() + (srf_m.size() + srf_a.size()) *
