@@ -56,17 +56,21 @@ class PIMInterface : public DRAMInterface
         {
             panic("exec() not implemented for base PIMInstruction class\n");
         }
+        virtual void
+        rst()
+        {}
     };
 
     class ControlInstruction : public PIMInstruction
     {
       private:
-        int8_t imm0, imm1;
+        int8_t imm0, imm1, cnt;
 
       public:
         ControlInstruction(PIMInstructionType _type, int8_t _imm0,
                            int8_t _imm1);
         void exec(PacketPtr pkt, PIMInterface *pim) override;
+        void rst() override;
     };
 
     class DataInstruction : public PIMInstruction

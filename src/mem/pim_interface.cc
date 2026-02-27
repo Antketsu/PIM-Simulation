@@ -151,10 +151,9 @@ PIMInterface::access(PacketPtr pkt)
         // skip pim and single bank registers, 32 bits per CRF entry,
         AddrRange crf_range = AddrRange(pim_range_start + 4,
                                         pim_range_start + 4 + crf_entries * 4);
-        AddrRange srf_range =
-            AddrRange(crf_range.end(),
-                      crf_range.end() + (srf_m.size() + srf_a.size()) *
-                                            2); // 16 bits per scalar register
+        AddrRange srf_range = AddrRange(
+            crf_range.end(),
+            crf_range.end() + srf_entries * 2); // 16 bits per scalar register
         AddrRange grf_range =
             AddrRange(srf_range.end(),
                       srf_range.end() + (grf_a.size() + grf_b.size()) *
@@ -164,6 +163,13 @@ PIMInterface::access(PacketPtr pkt)
         if (addr == pim_range_start) {
             // Access PIM mode register
             pim_mode = true;
+            pc = 0;
+            for (PIMInterface::PIMInstruction *i : crf) {
+                if (i == NULL) {
+                    break;
+                }
+                i->rst();
+            }
             DPRINTF(PIM, "Entering PIM mode\n");
         } else if (addr == pim_range_start + 1) {
             // Access single bank mode register
@@ -217,7 +223,7 @@ PIMInterface::executeKernel(PacketPtr pkt)
               pc, crf.size());
     }
     if (pim_mode) {
-        DPRINTF(PIM, "Executing instruction %d\n", pc);
+        DPRINTF(PIM, "Executing instruction %d %s\n", pc, crf[pc]->getType());
         crf[pc]->exec(pkt, this);
     }
 }
@@ -254,7 +260,7 @@ PIMInterface::PIMInstruction::getType()
 PIMInterface::ControlInstruction::ControlInstruction(PIMInstructionType _type,
                                                      int8_t _imm0,
                                                      int8_t _imm1)
-    : PIMInstruction(_type), imm0(_imm0), imm1(_imm1)
+    : PIMInstruction(_type), imm0(_imm0), imm1(_imm1), cnt(0)
 {}
 
 void
@@ -265,9 +271,9 @@ PIMInterface::ControlInstruction::exec(PacketPtr pkt, PIMInterface *pim)
             pim->incrementPC();
             break;
         case JUMP:
-            if (imm1 > 0) {
+            if (cnt < imm1) {
                 pim->decrementPC(imm0);
-                --imm1;
+                ++cnt;
             } else {
                 pim->incrementPC();
             }
@@ -278,6 +284,12 @@ PIMInterface::ControlInstruction::exec(PacketPtr pkt, PIMInterface *pim)
         default:
             panic("Unknown control instruction type %d\n", type);
     }
+}
+
+void
+PIMInterface::ControlInstruction::rst()
+{
+    cnt = 0;
 }
 
 PIMInterface::DataInstruction::DataInstruction(
@@ -334,6 +346,7 @@ PIMInterface::ALUInstruction::exec(PacketPtr pkt, PIMInterface *pim)
     int16_t *dest_vector = pim->getVector(dest, dest_idx, pkt);
     int16_t *op2_vector =
         pim->getVector(src2, src1_idx, pkt); // src2 uses src1_idx
+
     switch (type) {
         case ADD:
             assert(dest == GRF_A || dest == GRF_B);
