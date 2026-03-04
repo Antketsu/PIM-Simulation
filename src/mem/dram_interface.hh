@@ -64,7 +64,7 @@ namespace memory
  */
 class DRAMInterface : public MemInterface
 {
-  private:
+  protected:
     /**
      * Simple structure to hold the values needed to keep track of
      * commands for DRAMPower

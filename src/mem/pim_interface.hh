@@ -7,8 +7,10 @@
 #define __PIM_INTERFACE_HH__
 #include <memory>
 #include <vector>
+#include "debug/DRAMPower.hh"
 #include "debug/PIM.hh"
 #include "mem/dram_interface.hh"
+#include "mem/drampower.hh"
 #include "params/PIMInterface.hh"
 
 namespace gem5
@@ -139,10 +141,9 @@ class PIMInterface : public DRAMInterface
   public:
     PIMInterface(const PIMInterfaceParams &_p);
     void access(PacketPtr pkt);
-    /*std::pair<Tick, Tick>
-    doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
-                  const std::vector<MemPacketQueue>& queue)
-                  override;*/
+    std::pair<Tick, Tick>
+    doBurstAccess(MemPacket *mem_pkt, Tick next_burst_at,
+                  const std::vector<MemPacketQueue> &queue) override;
     void incrementPC();
     void decrementPC(uint8_t stride);
     void deactivatePIMMode();
