@@ -38,7 +38,8 @@ class PIMInterface : public DRAMInterface
         NONE = 0,
         GRF_A,
         GRF_B,
-        BANK,
+        ODD_BANK,
+        EVEN_BANK,
         SRF_M,
         SRF_A
     };
@@ -54,7 +55,7 @@ class PIMInterface : public DRAMInterface
         PIMInstruction(PIMInstructionType _type = NOP);
         std::string getType();
         virtual void
-        exec(PacketPtr pkt, PIMInterface *pim)
+        exec(Addr addr, PIMInterface *pim, uint8_t pu)
         {
             panic("exec() not implemented for base PIMInstruction class\n");
         }
@@ -66,12 +67,12 @@ class PIMInterface : public DRAMInterface
     class ControlInstruction : public PIMInstruction
     {
       private:
-        int8_t imm0, imm1, cnt;
+        uint8_t imm0, imm1, cnt;
 
       public:
         ControlInstruction(PIMInstructionType _type, int8_t _imm0,
                            int8_t _imm1);
-        void exec(PacketPtr pkt, PIMInterface *pim) override;
+        void exec(Addr addr, PIMInterface *pim, uint8_t pu) override;
         void rst() override;
     };
 
@@ -86,7 +87,7 @@ class PIMInterface : public DRAMInterface
         DataInstruction(PIMInstructionType _type, Operand _dest,
                         uint32_t _dest_idx, Operand _src0, uint32_t _src0_idx,
                         bool _do_relu);
-        void exec(PacketPtr pkt, PIMInterface *pim) override;
+        void exec(Addr addr, PIMInterface *pim, uint8_t pu) override;
     };
 
     class ALUInstruction : public PIMInstruction
@@ -99,7 +100,7 @@ class PIMInterface : public DRAMInterface
         ALUInstruction(PIMInstructionType _type, Operand _dest,
                        uint32_t _dest_idx, Operand _src0, uint32_t _src0_idx,
                        Operand _src1, uint32_t _src1_idx, Operand _src2);
-        void exec(PacketPtr pkt, PIMInterface *pim) override;
+        void exec(Addr addr, PIMInterface *pim, uint8_t pu) override;
     };
 
     /*
@@ -112,13 +113,22 @@ class PIMInterface : public DRAMInterface
     /*
      * Accelerator registers
      */
+
+    struct PIMProcessingUnit
+    {
+        PIMProcessingUnit(uint8_t srf_entries, uint8_t grf_entries,
+                          uint8_t simd_width);
+        std::vector<SIMD_vector>
+            srf_m; // scalar add register file, it replicates
+                   // a constant value in a vector
+        std::vector<SIMD_vector>
+            srf_a; // scalar mul register file, it replicates
+                   // a constant value in a vector
+        std::vector<SIMD_vector> grf_a; // vector register file
+        std::vector<SIMD_vector> grf_b; // vector register file
+    };
     std::vector<PIMInstruction *> crf;      // instruction register file
-    std::vector<SIMD_vector> grf_a;         // vector register file
-    std::vector<SIMD_vector> grf_b;         // vector register file
-    std::vector<SIMD_vector> srf_m; // scalar add register file, it replicates
-                                    // a constant value in a vector
-    std::vector<SIMD_vector> srf_a; // scalar mul register file, it replicates
-                                    // a constant value in a vector
+    std::vector<PIMProcessingUnit> processing_units; // processing units
     /*
      * Program counter
      */
@@ -127,15 +137,17 @@ class PIMInterface : public DRAMInterface
      * State variables
      */
     bool pim_mode;         // PIM mode enabled/disabled
-    bool single_bank_mode; // single bank mode enabled/disabled
+    bool all_bank_mode;    // all bank mode enabled/disabled
 
     /*
      * Start address of the PIM memory region
      */
     Addr pim_range_start;
-
-    int16_t *getVector(Operand op_type, uint32_t op_idx, PacketPtr pkt);
+    uint8_t decodeBank(Addr pkt_addr);
+    int16_t *getVector(uint8_t pu, Operand op_type, uint32_t op_idx,
+                       Addr addr);
     PIMInstruction *format_instruction(uint32_t raw_instr);
+    Addr modifyAddrForBank(Addr original_addr, uint8_t target_bank);
     void executeKernel(PacketPtr pkt);
 
   public:

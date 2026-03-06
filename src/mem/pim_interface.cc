@@ -8,6 +8,19 @@ using namespace Data;
 namespace memory
 {
 
+PIMInterface::PIMProcessingUnit::PIMProcessingUnit(uint8_t srf_entries,
+                                                   uint8_t grf_entries,
+                                                   uint8_t simd_width)
+    : srf_m(std::vector<std::vector<int16_t>>(
+          srf_entries / 2, std::vector<int16_t>(simd_width))),
+      srf_a(std::vector<std::vector<int16_t>>(
+          srf_entries / 2, std::vector<int16_t>(simd_width))),
+      grf_a(std::vector<std::vector<int16_t>>(
+          grf_entries / 2, std::vector<int16_t>(simd_width))),
+      grf_b(std::vector<std::vector<int16_t>>(
+          grf_entries / 2, std::vector<int16_t>(simd_width)))
+{}
+
 PIMInterface::PIMInterface(const PIMInterfaceParams &_p)
     : DRAMInterface(_p),
       crf_entries(_p.crf_entries),
@@ -15,17 +28,12 @@ PIMInterface::PIMInterface(const PIMInterfaceParams &_p)
       srf_entries(_p.srf_entries),
       simd_width(_p.simd_width),
       crf(std::vector<PIMInstruction *>(crf_entries, NULL)),
-      grf_a(std::vector<std::vector<int16_t>>(
-          _p.grf_entries / 2, std::vector<int16_t>(_p.simd_width))),
-      grf_b(std::vector<std::vector<int16_t>>(
-          _p.grf_entries / 2, std::vector<int16_t>(_p.simd_width))),
-      srf_m(std::vector<std::vector<int16_t>>(
-          _p.srf_entries / 2, std::vector<int16_t>(_p.simd_width))),
-      srf_a(std::vector<std::vector<int16_t>>(
-          _p.srf_entries / 2, std::vector<int16_t>(_p.simd_width))),
+      processing_units(std::vector<PIMProcessingUnit>(
+          _p.banks_per_rank / 2,
+          PIMProcessingUnit(srf_entries, grf_entries, simd_width))),
       pc(0),
       pim_mode(false),
-      single_bank_mode(true),
+      all_bank_mode(false),
       pim_range_start(_p.pim_range_start)
 {
     DPRINTF(PIM,
@@ -42,22 +50,69 @@ PIMInterface::~PIMInterface()
     }
 }
 
-int16_t *
-PIMInterface::getVector(Operand op_type, uint32_t op_idx, PacketPtr pkt)
+uint8_t
+PIMInterface::decodeBank(Addr pkt_addr)
 {
+    Addr addr = getCtrlAddr(pkt_addr);
+
+    addr = addr / burstSize;
+
+    if (addrMapping == enums::RoRaBaChCo || addrMapping == enums::RoRaBaCoCh) {
+        addr = addr / burstsPerRowBuffer;
+        return addr % banksPerRank;
+    } else if (addrMapping == enums::RoCoRaBaCh) {
+        if (burstsPerStripe > burstsPerRowBuffer) {
+            addr = addr / burstsPerRowBuffer;
+        } else {
+            addr = addr / burstsPerStripe;
+        }
+        return addr % banksPerRank;
+    }
+
+    panic("Mapping not supported for decodeBank in PIMInterface\n");
+}
+
+Addr
+PIMInterface::modifyAddrForBank(Addr original_addr, uint8_t target_bank)
+{
+    Addr column_bits_size = burstSize * burstsPerRowBuffer;
+
+    Addr high_part = (original_addr / (column_bits_size * banksPerRank)) *
+                     (column_bits_size * banksPerRank);
+    Addr low_part = original_addr % column_bits_size;
+
+    Addr bank_part = (Addr)target_bank * column_bits_size;
+
+    return high_part + bank_part + low_part;
+}
+
+int16_t *
+PIMInterface::getVector(uint8_t pu, Operand op_type, uint32_t op_idx,
+                        Addr addr)
+{
+    PIMInterface::PIMProcessingUnit &pu_ref = processing_units[pu];
+    uint8_t bank = decodeBank(addr);
     switch (op_type) {
         case NONE:
             return NULL;
         case GRF_A:
-            return &(grf_a[op_idx][0]);
+            return &(pu_ref.grf_a[op_idx][0]);
         case GRF_B:
-            return &(grf_b[op_idx][0]);
+            return &(pu_ref.grf_b[op_idx][0]);
         case SRF_M:
-            return &(srf_m[op_idx][0]);
+            return &(pu_ref.srf_m[op_idx][0]);
         case SRF_A:
-            return &(srf_a[op_idx][0]);
-        case BANK:
-            return (int16_t *)toHostAddr(pkt->getAddr());
+            return &(pu_ref.srf_a[op_idx][0]);
+        case ODD_BANK:
+            DPRINTF(PIM, "Decoding address %#x to bank %d for PU %d\n", addr,
+                    bank, pu);
+            assert(bank == 2 * pu);
+            return (int16_t *)toHostAddr(addr);
+        case EVEN_BANK:
+            DPRINTF(PIM, "Decoding address %#x to bank %d for PU %d\n", addr,
+                    bank, pu);
+            assert(bank == 2 * pu + 1);
+            return (int16_t *)toHostAddr(addr);
         default:
             panic("Unknown operand type %d for getVector\n", op_type);
     }
@@ -229,6 +284,7 @@ PIMInterface::doBurstAccess(MemPacket *mem_pkt, Tick next_burst_at,
     DPRINTF(PIM, "Schedule RD/WR burst at tick %d\n", cmd_at);
 
     // CHANGE: PIM Pipeline delay
+    // TO-DO: Parameter cycles
     Tick pim_pipeline_delay = pim_mode ? (5 * tCK) : 0;
 
     // update the packet ready time
@@ -443,17 +499,15 @@ PIMInterface::access(PacketPtr pkt)
     } else {
         Addr addr = pkt->getAddr();
         // skip pim and single bank registers, 32 bits per CRF entry,
-        AddrRange crf_range = AddrRange(pim_range_start + 4,
-                                        pim_range_start + 4 + crf_entries * 4);
-        AddrRange srf_range = AddrRange(
+        AddrRange crf_range = AddrRange(pim_range_start + 8,
+                                        pim_range_start + 8 + crf_entries * 4);
+        size_t srf_size =
+            srf_entries * simd_width * 2; // 16 bits per scalar register
+        size_t grf_size =
+            grf_entries * simd_width * 2; // 16 bits per vector register
+        AddrRange pu_range = AddrRange(
             crf_range.end(),
-            crf_range.end() + srf_entries * 2); // 16 bits per scalar register
-        AddrRange grf_range =
-            AddrRange(srf_range.end(),
-                      srf_range.end() + (grf_a.size() + grf_b.size()) *
-                                            simd_width * 2); // 16 bits
-                                                             // per vector
-                                                             // element
+            crf_range.end() + processing_units.size() * (srf_size + grf_size));
         if (addr == pim_range_start) {
             // Access PIM mode register
             pim_mode = true;
@@ -465,10 +519,10 @@ PIMInterface::access(PacketPtr pkt)
                 i->rst();
             }
             DPRINTF(PIM, "Entering PIM mode\n");
-        } else if (addr == pim_range_start + 1) {
-            // Access single bank mode register
-            single_bank_mode = !single_bank_mode;
-            DPRINTF(PIM, "Setting single bank mode to %d\n", single_bank_mode);
+        } else if (addr == pim_range_start + 4) {
+            // Access all bank mode register
+            all_bank_mode = !all_bank_mode;
+            DPRINTF(PIM, "Setting all bank mode to %d\n", all_bank_mode);
         } else if (crf_range.contains(addr)) {
             // Access CRF
             int idx = (addr - crf_range.start()) / 4;
@@ -476,27 +530,38 @@ PIMInterface::access(PacketPtr pkt)
             crf[idx] = format_instruction(raw_instr);
             DPRINTF(PIM, "Loaded instruction %s into CRF index %d\n",
                     crf[idx]->getType(), idx);
-        } else if (srf_range.contains(addr)) {
-            // Access SRF
-            int idx = (addr - srf_range.start()) / 2;
-            uint16_t val = *(pkt->getConstPtr<uint16_t>());
-            if (idx < srf_m.size()) {
-                for (int i = 0; i < simd_width; ++i) {
-                    srf_m[idx][i] = val;
-                }
-            } else {
-                for (int i = 0; i < simd_width; ++i) {
-                    srf_a[idx - srf_m.size()][i] = val;
-                }
+        } else if (pu_range.contains(addr)) {
+            // Get PU index
+            uint8_t pu_idx = (addr - crf_range.end()) / (srf_size + grf_size);
+            if (pu_idx >= processing_units.size()) {
+                panic(
+                    "PU index %d out of bounds for processing units size %d\n",
+                    pu_idx, processing_units.size());
             }
-            DPRINTF(PIM, "Loaded value %d into SRF index %d\n",
-                    (idx < srf_m.size()) ? srf_m[idx][0]
-                                         : srf_a[idx - srf_m.size()][0],
-                    idx);
-        } else if (grf_range.contains(addr)) {
-            // TO-DO: Access GRF
-            DPRINTF(PIM, "Access to GRF at address %#x not implemented yet\n",
-                    addr);
+            // See if it's an SRF or GRF access within the PU
+            Addr pu_base = crf_range.end() + pu_idx * (srf_size + grf_size);
+            AddrRange pu_srf_range = AddrRange(pu_base, pu_base + srf_size);
+            AddrRange pu_grf_range =
+                AddrRange(pu_srf_range.end(), pu_srf_range.end() + grf_size);
+            if (pu_srf_range.contains(addr)) {
+                // Access SRF
+                int idx = (addr - pu_srf_range.start()) / 2;
+                uint16_t val = *(pkt->getConstPtr<uint16_t>());
+                if (idx < processing_units[pu_idx].srf_m.size()) {
+                    for (int i = 0; i < simd_width; ++i) {
+                        processing_units[pu_idx].srf_m[idx][i] = val;
+                    }
+                }
+            } else if (pu_grf_range.contains(addr)) {
+                // Access GRF
+                DPRINTF(PIM,
+                        "Access to GRF at address %#x not implemented yet\n",
+                        addr);
+            } else {
+                panic(
+                    "Address %#x out of bounds for PU %d SRF and GRF ranges\n",
+                    addr, pu_idx);
+            }
         } else {
             // Address is not in PIM range, access normal DRAM
             DPRINTF(PIM, "Normal DRAM access at address %#x\n", addr);
@@ -516,9 +581,34 @@ PIMInterface::executeKernel(PacketPtr pkt)
         panic("Program counter %d exceeds instruction register file size %d\n",
               pc, crf.size());
     }
-    if (pim_mode) {
-        DPRINTF(PIM, "Executing instruction %d %s\n", pc, crf[pc]->getType());
-        crf[pc]->exec(pkt, this);
+    // We distingish CONTROL Instruction becasue of the programn counter
+    // increment, it could be incremented inside exec, but it would be
+    // problematic with all_bank mode
+    if (crf[pc]->getType() == "EXIT" || crf[pc]->getType() == "JUMP" ||
+        crf[pc]->getType() == "NOP") {
+        uint8_t pu = decodeBank(pkt->getAddr()) / 2;
+        DPRINTF(PIM, "Executing control instruction %d %s from PU %d\n", pc,
+                crf[pc]->getType(), pu);
+        crf[pc]->exec(pkt->getAddr(), this, pu);
+    } else {
+        if (all_bank_mode) {
+            uint8_t bank = decodeBank(pkt->getAddr());
+            for (uint8_t pu = 0; pu < processing_units.size(); ++pu) {
+                DPRINTF(PIM, "Executing instruction %d %s from PU %d\n", pc,
+                        crf[pc]->getType(), pu);
+                Addr addr = modifyAddrForBank(
+                    pkt->getAddr(), bank); // Modify address to target the
+                                           // correct bank for this PU
+                crf[pc]->exec(addr, this, pu);
+                bank += 2;
+            }
+        } else {
+            uint8_t pu = decodeBank(pkt->getAddr()) / 2;
+            DPRINTF(PIM, "Executing instruction %d %s from PU %d\n", pc,
+                    crf[pc]->getType(), pu);
+            crf[pc]->exec(pkt->getAddr(), this, pu);
+        }
+        ++pc;
     }
 }
 
@@ -558,7 +648,8 @@ PIMInterface::ControlInstruction::ControlInstruction(PIMInstructionType _type,
 {}
 
 void
-PIMInterface::ControlInstruction::exec(PacketPtr pkt, PIMInterface *pim)
+PIMInterface::ControlInstruction::exec(Addr addr, PIMInterface *pim,
+                                       uint8_t pu)
 {
     switch (type) {
         case NOP:
@@ -598,10 +689,10 @@ PIMInterface::DataInstruction::DataInstruction(
 {}
 
 void
-PIMInterface::DataInstruction::exec(PacketPtr pkt, PIMInterface *pim)
+PIMInterface::DataInstruction::exec(Addr addr, PIMInterface *pim, uint8_t pu)
 {
-    int16_t *src0_vector = pim->getVector(src0, src0_idx, pkt);
-    int16_t *dest_vector = pim->getVector(dest, dest_idx, pkt);
+    int16_t *src0_vector = pim->getVector(pu, src0, src0_idx, addr);
+    int16_t *dest_vector = pim->getVector(pu, dest, dest_idx, addr);
     switch (type) {
         case MOV:
             for (int i = 0; i < pim->getSIMDWidth(); ++i) {
@@ -614,7 +705,6 @@ PIMInterface::DataInstruction::exec(PacketPtr pkt, PIMInterface *pim)
         default:
             panic("Unknown data instruction type %d\n", type);
     }
-    pim->incrementPC();
 }
 
 PIMInterface::ALUInstruction::ALUInstruction(PIMInstructionType _type,
@@ -633,13 +723,13 @@ PIMInterface::ALUInstruction::ALUInstruction(PIMInstructionType _type,
 {}
 
 void
-PIMInterface::ALUInstruction::exec(PacketPtr pkt, PIMInterface *pim)
+PIMInterface::ALUInstruction::exec(Addr addr, PIMInterface *pim, uint8_t pu)
 {
-    int16_t *op0_vector = pim->getVector(src0, src0_idx, pkt);
-    int16_t *op1_vector = pim->getVector(src1, src1_idx, pkt);
-    int16_t *dest_vector = pim->getVector(dest, dest_idx, pkt);
+    int16_t *op0_vector = pim->getVector(pu, src0, src0_idx, addr);
+    int16_t *op1_vector = pim->getVector(pu, src1, src1_idx, addr);
+    int16_t *dest_vector = pim->getVector(pu, dest, dest_idx, addr);
     int16_t *op2_vector =
-        pim->getVector(src2, src1_idx, pkt); // src2 uses src1_idx
+        pim->getVector(pu, src2, src1_idx, addr); // src2 uses src1_idx
 
     switch (type) {
         case ADD:
@@ -670,7 +760,6 @@ PIMInterface::ALUInstruction::exec(PacketPtr pkt, PIMInterface *pim)
         default:
             panic("Unknown ALU instruction type %d\n", type);
     }
-    pim->incrementPC();
 }
 
 } // namespace memory
