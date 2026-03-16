@@ -3,6 +3,7 @@
 #include "pim.h"
 #include <stdlib.h>
 int main(){
+    /*
     init_pim();
     pim_operand A, B, C;
     int cols = 16 * 10 + 4;
@@ -25,5 +26,5 @@ int main(){
     for(int i = 0; i < cols; i++) {
         printf("C[%d] = %d\n", i, C.vector[i]);
     }
-
+*/
 }

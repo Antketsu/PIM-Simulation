@@ -3,6 +3,7 @@
 #include "pim.h"
 #include <stdlib.h>
 int main(){
+    /*
     init_pim();
     pim_operand A, B, C;
     init_operand(&A, 1, 16);
@@ -27,5 +28,5 @@ int main(){
     printf("Resultado de la multiplicación vector-matriz:\n");
     for(int j = 0; j < C.cols; ++j)
     printf("C[%d] = %d\n", j, C.vector[j]);
-
+*/
 }

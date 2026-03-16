@@ -18,27 +18,36 @@ from gem5.components.processors.simple_processor import SimpleProcessor
 from gem5.resources.resource import BinaryResource  
 from pim import PIMAccelerator
 
-# Here we setup a MESI Two Level Cache Hierarchy.
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--no_acc", action="store_true", help="indicate to execute the kernel without accelerator")
     parser.add_argument("--all_banks", action="store_true", help="indicate to execute the kernel that uses all banks")
     parser.add_argument("--kernel", help="kernel to execute")
+    parser.add_argument("--rows", type=int, help="number of rows in the matrices")
+    parser.add_argument("--cols", type=int, help="number of columns in the matrices")
     args = parser.parse_args()
     return args
 
-def exit_handler():
+args = parse_args()
+elems = args.rows * args.cols
+processing_units = 8 if args.all_banks else 1
+ELEMS_PER_ROW = 4096
+elems_per_bank = elems // processing_units
+rows = elems_per_bank // ELEMS_PER_ROW
+rows = rows + 1 if elems_per_bank % ELEMS_PER_ROW != 0 else rows
+
+
+def exit_handler_old():
     print("Exit event triggered - mapping memory region in the simulated process")
     process = processor.get_cores()[0].core.workload[0]
     # VA, PA, Size, Cacheable
     process.map(0x10000000, 0xC4000000, 0x1000000, False) # PIM region
     print("Mapped memory region at VA 0x10000000 to PA 0xC4000000")
     yield False
-    process.map(0x20000000, 0xD0000000, 0x1000000, False) # Operand A in bank1
+    process.map(0x20000000, 0xD0000000, 0x1000000, False) # Operand A in bank0
     print("Mapped memory region at VA 0x20000000 to PA 0xD0000000")
     yield False
-    process.map(0x30000000, 0xD1002000, 0x1000000, False) # Operand B in bank 0
+    process.map(0x30000000, 0xD1002000, 0x1000000, False) # Operand B in bank 1
     print("Mapped memory region at VA 0x30000000 to PA 0xD1000000")
     yield False
     process.map(0x40000000, 0xD2000000, 0x1000000, False) # Operand C in bank 0
@@ -81,10 +90,51 @@ def exit_handler_all_banks():
         yield False
     yield True
 
-# Here we setup a no-cache hierarchy to better observe the PIM behavior without cache effects.
-#cache_hierarchy = NoCache()
+def exit_handler():
+    process = processor.get_cores()[0].core.workload[0]
+    # VA, PA, Size, Cacheable
+    process.map(0x10000000, 0xC4000000, 0x1000000, False) # PIM region
+    print("Mapped memory region at VA 0x10000000 to PA 0xC4000000")
 
-args = parse_args()
+    row_size = 0x00001FFF 
+    bank_increment = 0x00004000 #We add two bank indexes, it's 4 and not 2 because banks bits take the last bit of the previous digit and the first 3 of the next -> 0000 0100
+    virtual_address = 0x20000000
+    even_bank_physical_address = 0xD0000000
+    virtual_increment = 0x00002000
+    row_increment = 0x00040000
+    # Operand A in bank 0
+    for i in range(processing_units):
+        physical_address = even_bank_physical_address
+        for j in range(rows):
+             process.map(virtual_address, physical_address, row_size, False) 
+             print("Mapped memory region at VA 0x{:x} to PA 0x{:x}".format(virtual_address, physical_address))
+             virtual_address += virtual_increment
+             physical_address += row_increment
+        even_bank_physical_address += bank_increment
+
+    odd_bank_physical_address = 0xD0002000
+    # Operand B in bank 1
+    for i in range(processing_units):
+        physical_address = odd_bank_physical_address
+        for j in range(rows):
+             process.map(virtual_address, physical_address, row_size, False) 
+             print("Mapped memory region at VA 0x{:x} to PA 0x{:x}".format(virtual_address, physical_address))
+             virtual_address += virtual_increment
+             physical_address += row_increment
+        odd_bank_physical_address += bank_increment
+    # Operand C in bank 0
+    even_bank_physical_address = 0xD0000000 + row_increment * rows
+    for i in range(processing_units):
+        physical_address = even_bank_physical_address
+        for j in range(rows):
+             process.map(virtual_address, physical_address, row_size, False) 
+             print("Mapped memory region at VA 0x{:x} to PA 0x{:x}".format(virtual_address, physical_address))
+             virtual_address += virtual_increment
+             physical_address += row_increment
+        even_bank_physical_address += bank_increment
+    yield False
+    yield True
+
 
 cache_hierarchy = PrivateL1SharedL2CacheHierarchy(
     l1d_size="16kB",
@@ -98,7 +148,7 @@ cache_hierarchy = PrivateL1SharedL2CacheHierarchy(
 # Setup the system memory.
 memory = SingleChannelDDR4_2400(size="3GB")
 
-processor = SimpleProcessor(num_cores=1,isa=ISA.X86,cpu_type=CPUTypes.TIMING)
+processor = SimpleProcessor(num_cores=1,isa=ISA.X86,cpu_type=CPUTypes.ATOMIC)
 
 kernels_path = "/homelocal/antoma19_local/u/tfm/pim-resources/binaries/"
 
@@ -126,9 +176,14 @@ else:
     if args.all_banks:
         print("Running kernel that uses all banks")
         kernels_path += "all_banks/"
+    else:
+        print("Running kernel that uses only one bank")
+        kernels_path += "single_bank/"
 
 
-board.set_se_binary_workload(BinaryResource(kernels_path + args.kernel))
+board.set_se_binary_workload(
+    binary=BinaryResource(kernels_path + args.kernel),
+    arguments=[str(args.rows), str(args.cols)],)
 
 simulator = None
 
@@ -138,7 +193,7 @@ if args.no_acc:
     simulator = Simulator(
         board=board,
     )
-elif args.all_banks:
+else:
     simulator = Simulator(
         board=board,
         on_exit_event= {
