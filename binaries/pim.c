@@ -40,7 +40,6 @@ int init_operand(pim_operand *op, uint32_t rows, uint32_t cols){
             else{
                 op->banks[i][j].size = ELEMS_PER_ROW;
             }
-            printf("Mapping bank %d, row %d at virtual address 0x%lx with size %d bytes\n", i, j, ptr, op->banks[i][j].size * 2);
             op->banks[i][j].elems = mmap(
                 (void *)ptr,  
                 ELEMS_PER_ROW * 2, // 16 bits per element
@@ -62,20 +61,16 @@ int init_operand(pim_operand *op, uint32_t rows, uint32_t cols){
 }
 
 uint16_t read_operand(pim_operand* op, int idx){
-    idx = idx * SIMD_WIDTH;
     uint32_t elems = op->rows * op->cols;
     uint32_t elems_per_bank = elems / processing_units;
     uint32_t row_idx = idx / ELEMS_PER_ROW;
-    printf("Reading from bank %d, row %d, element %d\n", 0, row_idx, idx);
     return op->banks[0][row_idx].elems[idx % ELEMS_PER_ROW];
 }
 
 void write_operand(pim_operand* op, int idx, int16_t value){
-    idx = idx * SIMD_WIDTH;
     uint32_t elems = op->rows * op->cols;
     uint32_t elems_per_bank = elems / processing_units;
     uint32_t row_idx = idx / ELEMS_PER_ROW;
-    printf("Writing to bank %d, row %d, element %d\n", 0, row_idx, idx);
     op->banks[0][row_idx].elems[idx % ELEMS_PER_ROW] = value;
 }
 
@@ -105,10 +100,6 @@ int add(pim_operand A, pim_operand B, pim_operand C){
         --regs;
     }
     uint8_t loops = elems_per_pu / (SIMD_WIDTH * regs);
-    printf("Loops:%d\n", loops); 
-    printf("Regs:%d\n", regs);
-    printf("Processing Units:%d\n", processing_units);
-    printf("Elems:%lu\n", elems);
     for(int i = 0; i < regs; ++i){
         write_add_block(i);
     }
@@ -128,10 +119,9 @@ int add(pim_operand A, pim_operand B, pim_operand C){
     int16_t dummy1, dummy2; //For fake memory access
     for(int i = 0; i < loops; ++i){
         for(int j = 0; j < regs; ++j){
-            printf("Loop %d, Reg %d\n", i, j);
-            dummy1 = read_operand(&A, i * regs + j); // Read to A's address to trigger the MOV instruction
-            dummy2 = read_operand(&B, i * regs + j); // Read to B's address to trigger the ADD instruction
-            write_operand(&C, i * regs + j, 0); // Write to C's address to trigger the MOV instruction to write back the result
+            dummy1 = read_operand(&A, (i * regs + j) * SIMD_WIDTH); // Read to A's address to trigger the MOV instruction
+            dummy2 = read_operand(&B, (i * regs + j) * SIMD_WIDTH); // Read to B's address to trigger the ADD instruction
+            write_operand(&C, (i * regs + j) * SIMD_WIDTH, 0); // Write to C's address to trigger the MOV instruction to write back the result
         }
         if(loops > 1)
             write_operand(&C, 0, 0); // Some memory access to trigger the execution of JUMP
@@ -145,44 +135,65 @@ int add(pim_operand A, pim_operand B, pim_operand C){
     return 0;
 }
 
+void write_mul_block(uint8_t op_idx){
+    //MOV GRFB, BANK0 
+    crf[instr_idx++] = DATA_INST(3, 2, 3, 0, op_idx, 0);
+    //MAC GRFB, BANK1, SRFM
+    crf[instr_idx++] = ALU_INST(7, 2, 4, 5, 0, op_idx, 0, op_idx);
+    //MOV BANK0 GRFB
+    crf[instr_idx++] = DATA_INST(3, 3, 2, 0, 0, op_idx);
+}
 
+typedef struct{
+    uint32_t row;
+    uint32_t col;
+} idx_t;
 
-/*
 int matrix_multiplication(pim_operand A, pim_operand B, pim_operand C){
     if(A.cols != B.rows || C.rows != A.rows || C.cols != B.cols)
         return 1;
     uint8_t loops = B.cols / SIMD_WIDTH;
-    //MOV GRFB, BANK0 
-    crf[instr_idx++] = DATA_INST(3, 2, 3, 0, 0, 0);
-    //MAC GRFB, BANK1, SRFM
-    crf[instr_idx++] = ALU_INST(7, 2, 3, 4, 0, 0, 0, 0);
-    //MOV BANK0 GRFB
-    crf[instr_idx++] = DATA_INST(3, 3, 2, 0, 0, 0);
+    uint8_t regs = 8;
+    for(int i = 0; i < regs; ++i){
+        write_mul_block(i);
+    }
     //JUMP 3, loops
-    crf[instr_idx++] = CTL_INST(1, 3, loops - 1);
+    crf[instr_idx++] = CTL_INST(1, 3 * regs, loops - 1);
     //EXIT
     crf[instr_idx++] = CTL_INST(2, 0, 0);
 
     int16_t dummy;
-    for(int k = 0; k < A.rows; ++k){
-        for(int i = 0; i < A.cols; ++i){
-            srf_m[0] = A.vector[k * A.cols + i];
+    uint32_t rowA_idx = 0, colA_idx = 0;
+    idx_t A_idx_per_reg[regs];
+    while(rowA_idx * A.cols + colA_idx < A.rows * A.cols){
+            for(int i = 0; i < regs; ++i){
+                srf_m[i] = read_operand(&A, rowA_idx * A.cols + colA_idx);
+                A_idx_per_reg[i].row = rowA_idx;
+                A_idx_per_reg[i].col = colA_idx;
+                ++colA_idx;
+                if(colA_idx == A.cols){
+                    colA_idx = 0;
+                    ++rowA_idx;
+                }
+            }
             pim_region[0] = 1; // Writing to this address activates PIM mode
-            int j = 0;        
+            int colB_idx = 0;        
             do{
-                dummy = C.vector[k * C.cols + j * SIMD_WIDTH]; // Read to C's address
-                dummy = B.vector[i * B.cols + j * SIMD_WIDTH]; //Read from B
-                C.vector[k * C.cols + j * SIMD_WIDTH] = 0; //Write to C
-                A.vector[0] = 0; // JUMP
-                ++j;
-            }while(j < loops);
-            A.vector[0] = 0; //EXIT
+                for(int i = 0; i < regs; ++i){
+                    uint32_t current_rowA_idx = A_idx_per_reg[i].row;
+                    uint32_t current_colA_idx = A_idx_per_reg[i].col;
+                    dummy = read_operand(&C, current_rowA_idx * C.cols + colB_idx * SIMD_WIDTH); // Read to C's address
+                    dummy = read_operand(&B, current_colA_idx * B.cols + colB_idx * SIMD_WIDTH); // Read to B's address to trigger the MAC instruction
+                    write_operand(&C, current_rowA_idx * C.cols + colB_idx * SIMD_WIDTH, 0); // Write to C's address
+                }
+                read_operand(&C, 0); // Some memory access to trigger the execution of JUMP
+                ++colB_idx;
+            }while(colB_idx < loops);
+            read_operand(&C, 0); // Some memory access to trigger the execution of EXIT
         }
-    }
-
     return 0;
 }
-*/
+
 
 int init_pim(){
     pim_region = mmap(

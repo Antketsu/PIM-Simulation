@@ -11,7 +11,7 @@ LDFLAGS = -L$(GEM5_PATH)/util/m5/build/$(ISA)/out -static
 LDLIBS = -lm5
 
 
-SOURCES = $(wildcard *.c)
+SOURCES = $(filter-out pim.c, $(wildcard *.c))
 
 TARGETS = $(SOURCES:.c=)
 
@@ -19,8 +19,8 @@ TARGETS = $(SOURCES:.c=)
 
 all: $(TARGETS)
 
-%: %.c $(PIM_DIR)/pim.c $(PIM_DIR)/pim.h
-	$(CC) $(CFLAGS) -o $@ $< $(PIM_DIR)/pim.c $(LDFLAGS) $(LDLIBS)
+%: %.c pim.c pim.h
+	$(CC) $(CFLAGS) -o $@ $< pim.c $(LDFLAGS) $(LDLIBS)
 
 clean:
 	rm -f $(TARGETS)
