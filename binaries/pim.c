@@ -2,7 +2,7 @@
 
 uint8_t *pim_region;
 uint32_t *crf;
-int16_t *srf_m;
+int16_t *pu_space;
 uint8_t instr_idx = 0;
 
 size_t pim_size = 0x1000000;  // 16 MB
@@ -14,6 +14,12 @@ uint8_t processing_units = 1;
 
 
 #define ROW_INCREMENT 0x00002000
+
+#define SRF_ETNRIES 16
+
+#define GRF_ENTRIES 16
+
+#define PU_SIZE (SRF_ETNRIES + GRF_ENTRIES * 16)// How many elements of 16 bits
 
 void set_processing_units(uint8_t units){
     processing_units = units;
@@ -144,6 +150,28 @@ void write_mul_block(uint8_t op_idx){
     crf[instr_idx++] = DATA_INST(3, 3, 2, 0, 0, op_idx);
 }
 
+uint16_t read_mul_operand(pim_operand* op, int idx){
+    uint32_t chunk = idx / SIMD_WIDTH;
+    uint32_t bank_idx = chunk % get_processing_units();
+    uint32_t chunk_number_in_bank = chunk / get_processing_units();
+    uint32_t idx_in_chunk = idx % SIMD_WIDTH;
+    uint32_t linear_idx_in_bank = chunk_number_in_bank * SIMD_WIDTH + idx_in_chunk;
+    uint32_t row_idx = linear_idx_in_bank / ELEMS_PER_ROW;
+    uint32_t elem_offset = linear_idx_in_bank % ELEMS_PER_ROW;
+    return op->banks[bank_idx][row_idx].elems[elem_offset];
+}
+
+void write_mul_operand(pim_operand* op, int idx, int16_t value){
+    uint32_t chunk = idx / SIMD_WIDTH;
+    uint32_t bank_idx = chunk % get_processing_units();
+    uint32_t chunk_number_in_bank = chunk / get_processing_units();
+    uint32_t idx_in_chunk = idx % SIMD_WIDTH;
+    uint32_t linear_idx_in_bank = chunk_number_in_bank * SIMD_WIDTH + idx_in_chunk;
+    uint32_t row_idx = linear_idx_in_bank / ELEMS_PER_ROW;
+    uint32_t elem_offset = linear_idx_in_bank % ELEMS_PER_ROW;
+    op->banks[bank_idx][row_idx].elems[elem_offset] = value;
+}
+
 typedef struct{
     uint32_t row;
     uint32_t col;
@@ -152,7 +180,7 @@ typedef struct{
 int matrix_multiplication(pim_operand A, pim_operand B, pim_operand C){
     if(A.cols != B.rows || C.rows != A.rows || C.cols != B.cols)
         return 1;
-    uint8_t loops = B.cols / SIMD_WIDTH;
+    uint8_t loops = B.cols / (SIMD_WIDTH * processing_units);
     uint8_t regs = 8;
     for(int i = 0; i < regs; ++i){
         write_mul_block(i);
@@ -165,9 +193,15 @@ int matrix_multiplication(pim_operand A, pim_operand B, pim_operand C){
     int16_t dummy;
     uint32_t rowA_idx = 0, colA_idx = 0;
     idx_t A_idx_per_reg[regs];
+    if(processing_units > 1){
+        // ACTIVATE ALL BANKS MODE
+        *(uint8_t *)(pim_region + 4) = 1; // Writing to this address activates the mode for all banks  
+    }
     while(rowA_idx * A.cols + colA_idx < A.rows * A.cols){
             for(int i = 0; i < regs; ++i){
-                srf_m[i] = read_operand(&A, rowA_idx * A.cols + colA_idx);
+                for(int j = 0; j < processing_units; ++j){
+                    pu_space[j * PU_SIZE + i] = read_mul_operand(&A, rowA_idx * A.cols + colA_idx);
+                }
                 A_idx_per_reg[i].row = rowA_idx;
                 A_idx_per_reg[i].col = colA_idx;
                 ++colA_idx;
@@ -182,14 +216,15 @@ int matrix_multiplication(pim_operand A, pim_operand B, pim_operand C){
                 for(int i = 0; i < regs; ++i){
                     uint32_t current_rowA_idx = A_idx_per_reg[i].row;
                     uint32_t current_colA_idx = A_idx_per_reg[i].col;
-                    dummy = read_operand(&C, current_rowA_idx * C.cols + colB_idx * SIMD_WIDTH); // Read to C's address
-                    dummy = read_operand(&B, current_colA_idx * B.cols + colB_idx * SIMD_WIDTH); // Read to B's address to trigger the MAC instruction
-                    write_operand(&C, current_rowA_idx * C.cols + colB_idx * SIMD_WIDTH, 0); // Write to C's address
+                    printf("Current row of A: %d, current col of A: %d, current col of B: %d\n", current_rowA_idx, current_colA_idx, colB_idx);
+                    dummy = read_mul_operand(&C, current_rowA_idx * C.cols + colB_idx * SIMD_WIDTH * processing_units); // Read to C's address
+                    dummy = read_mul_operand(&B, current_colA_idx * B.cols + colB_idx * SIMD_WIDTH * processing_units); // Read to B's address to trigger the MAC instruction
+                    write_mul_operand(&C, current_rowA_idx * C.cols + colB_idx * SIMD_WIDTH * processing_units, 0); // Write to C's address
                 }
-                read_operand(&C, 0); // Some memory access to trigger the execution of JUMP
+                read_mul_operand(&C, 0); // Some memory access to trigger the execution of JUMP
                 ++colB_idx;
             }while(colB_idx < loops);
-            read_operand(&C, 0); // Some memory access to trigger the execution of EXIT
+            read_mul_operand(&C, 0); // Some memory access to trigger the execution of EXIT
         }
     return 0;
 }
@@ -210,6 +245,6 @@ int init_pim(){
         return 1;
     }
     crf = (uint32_t *)(pim_region + 8); 
-    srf_m = (int16_t *)(crf + 32);
+    pu_space = (int16_t *)(crf + 32);
     return 0;
 }
