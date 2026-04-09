@@ -139,6 +139,9 @@ class PIMInterface : public DRAMInterface
     bool pim_mode;         // PIM mode enabled/disabled
     bool all_bank_mode;    // all bank mode enabled/disabled
 
+    bool pending_to_precharge; // whether we are waiting to precharge after
+                               // mode switch
+
     /*
      * Start address of the PIM memory region
      */

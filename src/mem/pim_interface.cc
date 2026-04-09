@@ -215,35 +215,64 @@ PIMInterface::doBurstAccess(MemPacket *mem_pkt, Tick next_burst_at,
         rank_ref.scheduleWakeUpEvent(tXP);
     }
 
-    // get the bank
-    Bank &bank_ref = rank_ref.banks[mem_pkt->bank];
-
     // for the state we need to track if it is a row hit or not
     bool row_hit = true;
 
-    // Determine the access latency and update the bank state
-    if (bank_ref.openRow == mem_pkt->row) {
-        // nothing to do
-    } else {
+    // get the bank
+    Bank &bank_ref = rank_ref.banks[mem_pkt->bank];
+
+    // CHANGE: If we are changing mode or in PIM mode and there is a row
+    // conflict, we need to precharge all banks in the rank and activate the
+    // new row
+    Tick col_allowed_at;
+    if (pending_to_precharge ||
+        (all_bank_mode && pim_mode && bank_ref.openRow != mem_pkt->row)) {
+        DPRINTF(PIM,
+                "Changing mode or in PIM mode with row conflict, precharging "
+                "all banks in rank %d\n",
+                mem_pkt->rank);
         row_hit = false;
-
-        // If there is a page open, precharge it.
-        if (bank_ref.openRow != Bank::NO_ROW) {
-            prechargeBank(rank_ref, bank_ref,
-                          std::max(bank_ref.preAllowedAt, curTick()));
+        // CHANGE: If we are in all bank mode and PIM mode, we want to
+        // precharge all banks in the rank, not just the accessed bank
+        Tick max_col_allowed_at = curTick();
+        for (int i = 0; i < banksPerRank; i++) {
+            Bank &bank_ref = rank_ref.banks[i];
+            if (bank_ref.openRow != Bank::NO_ROW) {
+                prechargeBank(rank_ref, bank_ref,
+                              std::max(bank_ref.preAllowedAt, curTick()),
+                              true);
+            }
+            activateBank(rank_ref, bank_ref,
+                         std::max(bank_ref.actAllowedAt, curTick()),
+                         mem_pkt->row);
+            max_col_allowed_at = std::max(
+                max_col_allowed_at, mem_pkt->isRead() ? bank_ref.rdAllowedAt
+                                                      : bank_ref.wrAllowedAt);
         }
-
-        // next we need to account for the delay in activating the page
-        Tick act_tick = std::max(bank_ref.actAllowedAt, curTick());
-
-        // Record the activation and deal with all the global timing
-        // constraints caused be a new activation (tRRD and tXAW)
-        activateBank(rank_ref, bank_ref, act_tick, mem_pkt->row);
+        col_allowed_at = max_col_allowed_at;
+        pending_to_precharge = false;
     }
+    // Determine the access latency and update the bank state
+    else {
+        if (bank_ref.openRow == mem_pkt->row) {
+            // nothing to do
+        } else {
+            row_hit = false;
 
-    // respect any constraints on the command (e.g. tRCD or tCCD)
-    const Tick col_allowed_at =
-        mem_pkt->isRead() ? bank_ref.rdAllowedAt : bank_ref.wrAllowedAt;
+            // If there is a page open, precharge it.
+            if (bank_ref.openRow != Bank::NO_ROW) {
+                prechargeBank(rank_ref, bank_ref,
+                              std::max(bank_ref.preAllowedAt, curTick()));
+            }
+
+            // next we need to account for the delay in activating the page
+            Tick act_tick = std::max(bank_ref.actAllowedAt, curTick());
+            activateBank(rank_ref, bank_ref, act_tick, mem_pkt->row);
+        }
+        // respect any constraints on the command (e.g. tRCD or tCCD)
+        col_allowed_at =
+            mem_pkt->isRead() ? bank_ref.rdAllowedAt : bank_ref.wrAllowedAt;
+    }
 
     // we need to wait until the bus is available before we can issue
     // the command; need to ensure minimum bus delay requirement is met
@@ -304,7 +333,10 @@ PIMInterface::doBurstAccess(MemPacket *mem_pkt, Tick next_burst_at,
         for (int i = 0; i < banksPerRank; i++) {
             if (mem_pkt->rank == j) {
                 if (bankGroupArch &&
-                    (bank_ref.bankgr == ranks[j]->banks[i].bankgr)) {
+                    (bank_ref.bankgr == ranks[j]->banks[i].bankgr ||
+                     (all_bank_mode &&
+                      pim_mode))) { // CHANGE: Now we enter here if we are in
+                                    // pim_mode all_bank_mode
                     // bank group architecture requires longer delays between
                     // RD/WR burst commands to the same bank group.
                     // tCCD_L is default requirement for same BG timing
@@ -341,20 +373,35 @@ PIMInterface::doBurstAccess(MemPacket *mem_pkt, Tick next_burst_at,
     // Save rank of current access
     activeRank = mem_pkt->rank;
 
-    // If this is a write, we also need to respect the write recovery
-    // time before a precharge, in the case of a read, respect the
-    // read to precharge constraint
-    bank_ref.preAllowedAt =
-        std::max(bank_ref.preAllowedAt,
-                 mem_pkt->isRead() ? cmd_at + tRTP : mem_pkt->readyTime + tWR);
+    bool auto_precharge = pageMgmt == enums::close;
 
-    // increment the bytes accessed and the accesses per row
-    bank_ref.bytesAccessed += burstSize;
-    ++bank_ref.rowAccesses;
+    // CHANGE: If we are in all bank mode and PIM mode, we want to update the
+    // state of all banks in the rank, not just the accessed bank
+    if (all_bank_mode && pim_mode) {
+        for (int i = 0; i < banksPerRank; i++) {
+            Bank &bank_ref = rank_ref.banks[i];
+            bank_ref.preAllowedAt = std::max(
+                bank_ref.preAllowedAt,
+                mem_pkt->isRead() ? cmd_at + tRTP : mem_pkt->readyTime + tWR);
+            bank_ref.bytesAccessed += burstSize;
+            ++bank_ref.rowAccesses;
+            auto_precharge |= bank_ref.rowAccesses == maxAccessesPerRow;
+        }
+    } else {
+        // If this is a write, we also need to respect the write recovery
+        // time before a precharge, in the case of a read, respect the
+        // read to precharge constraint
+        bank_ref.preAllowedAt = std::max(
+            bank_ref.preAllowedAt,
+            mem_pkt->isRead() ? cmd_at + tRTP : mem_pkt->readyTime + tWR);
 
-    // if we reached the max, then issue with an auto-precharge
-    bool auto_precharge =
-        pageMgmt == enums::close || bank_ref.rowAccesses == maxAccessesPerRow;
+        // increment the bytes accessed and the accesses per row
+        bank_ref.bytesAccessed += burstSize;
+        ++bank_ref.rowAccesses;
+        // if we reached the max, then issue with an auto-precharge
+        auto_precharge = pageMgmt == enums::close ||
+                         bank_ref.rowAccesses == maxAccessesPerRow;
+    }
 
     // if we did not hit the limit, we might still want to
     // auto-precharge
@@ -431,10 +478,23 @@ PIMInterface::doBurstAccess(MemPacket *mem_pkt, Tick next_burst_at,
     if (auto_precharge) {
         // if auto-precharge push a PRE command at the correct tick to the
         // list used by DRAMPower library to calculate power
-        prechargeBank(rank_ref, bank_ref,
-                      std::max(curTick(), bank_ref.preAllowedAt), true);
+        // CHANGE: If we are in all bank mode and PIM mode, we want to
+        // precharge all banks in the rank, not just the accessed bank
+        if (all_bank_mode && pim_mode) {
+            for (int i = 0; i < banksPerRank; i++) {
+                Bank &bank_ref = rank_ref.banks[i];
+                prechargeBank(rank_ref, bank_ref,
+                              std::max(curTick(), bank_ref.preAllowedAt),
+                              true);
+            }
+            DPRINTF(PIM, "Auto-precharged all banks in rank: %d\n",
+                    mem_pkt->rank);
+        } else {
+            prechargeBank(rank_ref, bank_ref,
+                          std::max(curTick(), bank_ref.preAllowedAt), true);
 
-        DPRINTF(PIM, "Auto-precharged bank: %d\n", mem_pkt->bankId);
+            DPRINTF(PIM, "Auto-precharged bank: %d\n", mem_pkt->bankId);
+        }
     }
 
     // Update the stats and schedule the next request
@@ -501,16 +561,16 @@ PIMInterface::access(PacketPtr pkt)
         // skip pim and single bank registers, 32 bits per CRF entry,
         AddrRange crf_range = AddrRange(pim_range_start + 8,
                                         pim_range_start + 8 + crf_entries * 4);
-        size_t srf_size =
-            srf_entries * simd_width * 2; // 16 bits per scalar register
+        size_t srf_size = srf_entries * 2; // 16 bits per scalar register
         size_t grf_size =
-            grf_entries * simd_width * 2; // 16 bits per vector register
+            grf_entries * simd_width * 2; // 16 bits per vector register entry
         AddrRange pu_range = AddrRange(
             crf_range.end(),
             crf_range.end() + processing_units.size() * (srf_size + grf_size));
         if (addr == pim_range_start) {
             // Access PIM mode register
             pim_mode = true;
+            pending_to_precharge = true;
             pc = 0;
             for (PIMInterface::PIMInstruction *i : crf) {
                 if (i == NULL) {
@@ -548,9 +608,30 @@ PIMInterface::access(PacketPtr pkt)
                 int idx = (addr - pu_srf_range.start()) / 2;
                 uint16_t val = *(pkt->getConstPtr<uint16_t>());
                 if (idx < processing_units[pu_idx].srf_m.size()) {
+                    DPRINTF(
+                        PIM,
+                        "Access to SRF_M at index %d in PU %d with value %d\n",
+                        idx, pu_idx, val);
                     for (int i = 0; i < simd_width; ++i) {
                         processing_units[pu_idx].srf_m[idx][i] = val;
                     }
+                } else if (idx < processing_units[pu_idx].srf_m.size() +
+                                     processing_units[pu_idx].srf_a.size()) {
+                    idx -= processing_units[pu_idx].srf_m.size();
+                    DPRINTF(
+                        PIM,
+                        "Access to SRF_A at index %d in PU %d with value %d\n",
+                        idx, pu_idx, val);
+                    for (int i = 0; i < simd_width; ++i) {
+                        processing_units[pu_idx].srf_a[idx][i] = val;
+                    }
+                } else {
+                    panic("SRF index %d out of bounds for SRF size %d in PU "
+                          "%d\n",
+                          idx,
+                          processing_units[pu_idx].srf_m.size() +
+                              processing_units[pu_idx].srf_a.size(),
+                          pu_idx);
                 }
             } else if (pu_grf_range.contains(addr)) {
                 // Access GRF
