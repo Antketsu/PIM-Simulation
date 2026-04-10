@@ -1,12 +1,12 @@
-GEM5_PATH = /homelocal/antoma19_local/u/cnm/gem5/gem5
-ISA = x86
-CC = gcc
+GEM5_PATH = /homelocal/antoma19_local/u/tfm/gem5-pim
+ISA = arm64
+CC = aarch64-linux-gnu-gcc
 
 
 PIM_DIR = ..
 
 
-CFLAGS = -I$(GEM5_PATH)/include -I$(PIM_DIR)
+CFLAGS = -O0 -I$(GEM5_PATH)/include -I$(PIM_DIR)
 LDFLAGS = -L$(GEM5_PATH)/util/m5/build/$(ISA)/out -static
 LDLIBS = -lm5
 

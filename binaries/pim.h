@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <gem5/m5ops.h>
 
-#define ELEMS_PER_ROW 4096
+#define ELEMS_PER_ROW 512
 #define SIMD_WIDTH 16
 #define CTL_INST(opcode, imm0, imm1) \
     (opcode << 28) | (imm0 << 11) | (imm1)  

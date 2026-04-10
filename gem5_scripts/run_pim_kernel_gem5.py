@@ -1,22 +1,24 @@
 import argparse
 
 
-from gem5.components.boards.x86_board import X86Board
+#from gem5.components.boards.x86_board import X86Board
+from gem5.components.boards.simple_board import SimpleBoard
 from gem5.components.cachehierarchies.classic.private_l1_shared_l2_cache_hierarchy import (
     PrivateL1SharedL2CacheHierarchy
 )
 from gem5.components.cachehierarchies.classic.no_cache import NoCache
 from gem5.components.memory.single_channel import SingleChannelDDR4_2400
+from gem5.components.memory.hbm import HBM2Stack
 from gem5.components.processors.cpu_types import CPUTypes
 from gem5.isas import ISA
 from gem5.resources.resource import obtain_resource
 from gem5.simulate.simulator import Simulator
 from gem5.resources.resource import Resource, DiskImageResource
 from gem5.simulate.exit_event import ExitEvent
-from pim_board import PIMBoard
+from gem5.components.boards.pim_board import PIMBoard
 from gem5.components.processors.simple_processor import SimpleProcessor
 from gem5.resources.resource import BinaryResource  
-from pim import PIMAccelerator
+from gem5.components.memory.pim import PIMAccelerator
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -34,7 +36,7 @@ def parse_args():
 
 args = parse_args()
 processing_units = 8 if args.all_banks else 1
-ELEMS_PER_ROW = 4096
+ELEMS_PER_ROW = 512
 
 elemsA = args.rowsA * args.colsA
 elems_per_bank_A = elemsA // processing_units
@@ -58,13 +60,14 @@ def exit_handler():
     print("Mapped memory region at VA 0x10000000 to PA 0xC4000000")
 
     row_size = 0x00001FFF 
-    bank_increment = 0x00004000 #We add two bank indexes, it's 4 and not 2 because banks bits take the last bit of the previous digit and the first 3 of the next -> 0000 0100
+    bank_increment = 0x00000800 #We add two bank indexes
     virtual_address = 0x20000000
     even_bank_physical_address = 0xD0000000
     virtual_increment = 0x00002000
     row_increment = 0x00040000
     # Operand A in bank 0
     for i in range(processing_units):
+        print("Mapping A in bank {}".format(i))
         physical_address = even_bank_physical_address
         for j in range(rows_A):
              process.map(virtual_address, physical_address, row_size, False) 
@@ -73,9 +76,10 @@ def exit_handler():
              physical_address += row_increment
         even_bank_physical_address += bank_increment
 
-    odd_bank_physical_address = 0xD0002000
+    odd_bank_physical_address = 0xD0000400
     # Operand B in bank 1
     for i in range(processing_units):
+        print("Mapping B in bank {}".format(i))
         physical_address = odd_bank_physical_address
         for j in range(rows_B):
              process.map(virtual_address, physical_address, row_size, False) 
@@ -86,6 +90,7 @@ def exit_handler():
     # Operand C in bank 0
     even_bank_physical_address = 0xD0000000 + row_increment * rows_A * processing_units
     for i in range(processing_units):
+        print("Mapping C in bank {}".format(i))
         physical_address = even_bank_physical_address
         for j in range(rows_C):
              process.map(virtual_address, physical_address, row_size, False) 
@@ -109,7 +114,7 @@ cache_hierarchy = PrivateL1SharedL2CacheHierarchy(
 # Setup the system memory.
 memory = SingleChannelDDR4_2400(size="3GB")
 
-processor = SimpleProcessor(num_cores=1,isa=ISA.X86,cpu_type=CPUTypes.ATOMIC)
+processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.ATOMIC)
 
 kernel_path = "/homelocal/antoma19_local/u/tfm/pim-resources/binaries/"
 
@@ -118,13 +123,13 @@ board = None
 if args.no_acc:
     print("Running without accelerator")
     pim = None
-    board = X86Board(
+    board = SimpleBoard(
         clk_freq="1GHz",
         processor=processor,
         memory=memory,
         cache_hierarchy=cache_hierarchy,
     )
-    kernel_path += "no_acc/"
+    kernel_path += "no_acc/exec_no_acc_kernel"
 else:
     pim = PIMAccelerator(size="3GB")
     board = PIMBoard(

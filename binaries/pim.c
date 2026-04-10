@@ -1,5 +1,5 @@
 #include "pim.h"
-
+#include <stdatomic.h>
 uint8_t *pim_region;
 uint32_t *crf;
 int16_t *pu_space;
@@ -211,6 +211,7 @@ int matrix_multiplication(pim_operand A, pim_operand B, pim_operand C){
                 }
             }
             pim_region[0] = 1; // Writing to this address activates PIM mode
+            atomic_thread_fence(memory_order_seq_cst);
             int colB_idx = 0;        
             do{
                 for(int i = 0; i < regs; ++i){

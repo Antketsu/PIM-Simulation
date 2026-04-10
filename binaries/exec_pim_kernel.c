@@ -17,7 +17,9 @@ void fill_matrixs_add(pim_operand* A, pim_operand* B){
                 }
             }
         }
-        col_idx = 0; row_idx = 0;
+    }
+    col_idx = 0; row_idx = 0;
+    for(int i = 0; i < get_processing_units(); ++i){
         for (int j = 0; j < B->bank_rows; j++) {
             for(int k = 0; k < B->banks[i][j].size; ++k){
                 if(row_idx == col_idx){
@@ -142,6 +144,8 @@ int main(int argc, char *argv[]) {
             printf("Add error\n");
             exit(1);
         }
+        print_add_result(&A);
+        print_add_result(&B);
         print_add_result(&C);
     }
     else if(kernel == 1){
