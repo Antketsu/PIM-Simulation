@@ -105,7 +105,7 @@ int add(pim_operand A, pim_operand B, pim_operand C){
     while(elems_per_pu % regs){
         --regs;
     }
-    uint8_t loops = elems_per_pu / (SIMD_WIDTH * regs);
+    uint16_t loops = elems_per_pu / (SIMD_WIDTH * regs);
     for(int i = 0; i < regs; ++i){
         write_add_block(i);
     }
@@ -180,7 +180,7 @@ typedef struct{
 int matrix_multiplication(pim_operand A, pim_operand B, pim_operand C){
     if(A.cols != B.rows || C.rows != A.rows || C.cols != B.cols)
         return 1;
-    uint8_t loops = B.cols / (SIMD_WIDTH * processing_units);
+    uint16_t loops = B.cols / (SIMD_WIDTH * processing_units);
     uint8_t regs = 8;
     for(int i = 0; i < regs; ++i){
         write_mul_block(i);
@@ -217,7 +217,7 @@ int matrix_multiplication(pim_operand A, pim_operand B, pim_operand C){
                 for(int i = 0; i < regs; ++i){
                     uint32_t current_rowA_idx = A_idx_per_reg[i].row;
                     uint32_t current_colA_idx = A_idx_per_reg[i].col;
-                    printf("Current row of A: %d, current col of A: %d, current col of B: %d\n", current_rowA_idx, current_colA_idx, colB_idx);
+                    //printf("Current row of A: %d, current col of A: %d, current col of B: %d\n", current_rowA_idx, current_colA_idx, colB_idx);
                     dummy = read_mul_operand(&C, current_rowA_idx * C.cols + colB_idx * SIMD_WIDTH * processing_units); // Read to C's address
                     dummy = read_mul_operand(&B, current_colA_idx * B.cols + colB_idx * SIMD_WIDTH * processing_units); // Read to B's address to trigger the MAC instruction
                     write_mul_operand(&C, current_rowA_idx * C.cols + colB_idx * SIMD_WIDTH * processing_units, 0); // Write to C's address

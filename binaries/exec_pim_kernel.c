@@ -144,8 +144,6 @@ int main(int argc, char *argv[]) {
             printf("Add error\n");
             exit(1);
         }
-        print_add_result(&A);
-        print_add_result(&B);
         print_add_result(&C);
     }
     else if(kernel == 1){

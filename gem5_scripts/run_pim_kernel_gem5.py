@@ -114,7 +114,7 @@ cache_hierarchy = PrivateL1SharedL2CacheHierarchy(
 # Setup the system memory.
 memory = SingleChannelDDR4_2400(size="3GB")
 
-processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.ATOMIC)
+processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.MINOR)
 
 kernel_path = "/homelocal/antoma19_local/u/tfm/pim-resources/binaries/"
 
