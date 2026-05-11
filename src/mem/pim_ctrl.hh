@@ -13,9 +13,20 @@ namespace memory
 class PIMCtrl : public MemCtrl
 {
   protected:
+    struct PIMCtrlStats : public statistics::Group
+    {
+        PIMCtrlStats(PIMCtrl &_pim);
+
+        PIMCtrl &pim_ctrl;
+
+        statistics::Scalar PIMReads;
+        statistics::Scalar PIMWrites;
+
+    } pim_stats;
     Tick recvAtomic(PacketPtr pkt) override;
     void accessAndRespond(PacketPtr pkt, Tick static_latency,
                           MemInterface *mem_intr) override;
+    bool recvTimingReq(PacketPtr pkt) override;
 
   public:
     PIMCtrl(const PIMCtrlParams &p);

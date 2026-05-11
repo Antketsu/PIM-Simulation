@@ -34,7 +34,9 @@ PIMInterface::PIMInterface(const PIMInterfaceParams &_p)
       pc(0),
       pim_mode(false),
       all_bank_mode(false),
-      pim_range_start(_p.pim_range_start)
+      pim_range_start(_p.pim_range_start),
+      pim_stats(*this)
+
 {
     DPRINTF(PIM,
             "Initialized PIMInterface with CRF entries %d, GRF entries %d, "
@@ -49,6 +51,27 @@ PIMInterface::~PIMInterface()
         delete instr;
     }
 }
+
+PIMInterface::PIMStats::PIMStats(PIMInterface &_pim)
+    : Group(&_pim),
+      pim_intr(_pim),
+      ctrl_instrs_executed(this, "ctrl_instrs_executed",
+                           "Number of control instructions executed"),
+      data_instrs_executed(this, "data_instrs_executed",
+                           "Number of data instructions executed"),
+      alu_instrs_executed(this, "alu_instrs_executed",
+                          "Number of ALU instructions executed"),
+      grf_reads(this, "grf_reads", "Number of GRF read operations"),
+      grf_writes(this, "grf_writes", "Number of GRF write operations"),
+      crf_reads(this, "crf_reads", "Number of CRF read operations"),
+      crf_writes(this, "crf_writes", "Number of CRF write operations"),
+      srf_reads(this, "srf_reads", "Number of SRF read operations"),
+      srf_writes(this, "srf_writes", "Number of SRF write operations"),
+      pim_mode_switches(this, "pim_mode_switches",
+                        "Number of PIM mode switches"),
+      all_bank_mode_switches(this, "all_bank_mode_switches",
+                             "Number of all bank mode switches")
+{}
 
 uint8_t
 PIMInterface::decodeBank(Addr pkt_addr)
@@ -88,7 +111,7 @@ PIMInterface::modifyAddrForBank(Addr original_addr, uint8_t target_bank)
 
 int16_t *
 PIMInterface::getVector(uint8_t pu, Operand op_type, uint32_t op_idx,
-                        Addr addr)
+                        Addr addr, bool is_write)
 {
     PIMInterface::PIMProcessingUnit &pu_ref = processing_units[pu];
     uint8_t bank = decodeBank(addr);
@@ -96,12 +119,32 @@ PIMInterface::getVector(uint8_t pu, Operand op_type, uint32_t op_idx,
         case NONE:
             return NULL;
         case GRF_A:
+            if (is_write) {
+                pim_stats.grf_writes++;
+            } else {
+                pim_stats.grf_reads++;
+            }
             return &(pu_ref.grf_a[op_idx][0]);
         case GRF_B:
+            if (is_write) {
+                pim_stats.grf_writes++;
+            } else {
+                pim_stats.grf_reads++;
+            }
             return &(pu_ref.grf_b[op_idx][0]);
         case SRF_M:
+            if (is_write) {
+                pim_stats.srf_writes++;
+            } else {
+                pim_stats.srf_reads++;
+            }
             return &(pu_ref.srf_m[op_idx][0]);
         case SRF_A:
+            if (is_write) {
+                pim_stats.srf_writes++;
+            } else {
+                pim_stats.srf_reads++;
+            }
             return &(pu_ref.srf_a[op_idx][0]);
         case ODD_BANK:
             DPRINTF(PIM, "Decoding address %#x to bank %d for PU %d\n", addr,
@@ -187,6 +230,12 @@ PIMInterface::deactivatePIMMode()
 {
     pim_mode = false;
     DPRINTF(PIM, "Exiting PIM mode\n");
+}
+
+bool
+PIMInterface::inPIMMode()
+{
+    return pim_mode;
 }
 
 uint8_t
@@ -313,8 +362,10 @@ PIMInterface::doBurstAccess(MemPacket *mem_pkt, Tick next_burst_at,
     DPRINTF(PIM, "Schedule RD/WR burst at tick %d\n", cmd_at);
 
     // CHANGE: PIM Pipeline delay
-    // TO-DO: Parameter cycles
-    Tick pim_pipeline_delay = pim_mode ? (5 * tCK) : 0;
+    // 5 pipeline stages
+    // Samsung's paper says that the frequency of HBM2 DRAM is 4× slower than
+    // the memory bus frequency TO-DO: Parameter cycles
+    Tick pim_pipeline_delay = pim_mode ? (5 * 4 * tCK) : 0;
 
     // update the packet ready time
     if (mem_pkt->isRead()) {
@@ -578,10 +629,12 @@ PIMInterface::access(PacketPtr pkt)
                 }
                 i->rst();
             }
+            pim_stats.pim_mode_switches++;
             DPRINTF(PIM, "Entering PIM mode\n");
         } else if (addr == pim_range_start + 4) {
             // Access all bank mode register
             all_bank_mode = !all_bank_mode;
+            pim_stats.all_bank_mode_switches++;
             DPRINTF(PIM, "Setting all bank mode to %d\n", all_bank_mode);
         } else if (crf_range.contains(addr)) {
             // Access CRF
@@ -590,6 +643,11 @@ PIMInterface::access(PacketPtr pkt)
             crf[idx] = format_instruction(raw_instr);
             DPRINTF(PIM, "Loaded instruction %s into CRF index %d\n",
                     crf[idx]->getType(), idx);
+            if (pkt->isWrite()) {
+                pim_stats.crf_writes++;
+            } else {
+                pim_stats.crf_reads++;
+            }
         } else if (pu_range.contains(addr)) {
             // Get PU index
             uint8_t pu_idx = (addr - crf_range.end()) / (srf_size + grf_size);
@@ -607,6 +665,11 @@ PIMInterface::access(PacketPtr pkt)
                 // Access SRF
                 int idx = (addr - pu_srf_range.start()) / 2;
                 uint16_t val = *(pkt->getConstPtr<uint16_t>());
+                if (pkt->isWrite()) {
+                    pim_stats.srf_writes++;
+                } else {
+                    pim_stats.srf_reads++;
+                }
                 if (idx < processing_units[pu_idx].srf_m.size()) {
                     DPRINTF(
                         PIM,
@@ -638,6 +701,11 @@ PIMInterface::access(PacketPtr pkt)
                 DPRINTF(PIM,
                         "Access to GRF at address %#x not implemented yet\n",
                         addr);
+                if (pkt->isWrite()) {
+                    pim_stats.grf_writes++;
+                } else {
+                    pim_stats.grf_reads++;
+                }
             } else {
                 panic(
                     "Address %#x out of bounds for PU %d SRF and GRF ranges\n",
@@ -662,16 +730,23 @@ PIMInterface::executeKernel(PacketPtr pkt)
         panic("Program counter %d exceeds instruction register file size %d\n",
               pc, crf.size());
     }
+    pim_stats.crf_reads++;
     // We distingish CONTROL Instruction becasue of the programn counter
     // increment, it could be incremented inside exec, but it would be
     // problematic with all_bank mode
     if (crf[pc]->getType() == "EXIT" || crf[pc]->getType() == "JUMP" ||
         crf[pc]->getType() == "NOP") {
+        pim_stats.ctrl_instrs_executed++;
         uint8_t pu = decodeBank(pkt->getAddr()) / 2;
         DPRINTF(PIM, "Executing control instruction %d %s from PU %d\n", pc,
                 crf[pc]->getType(), pu);
-        crf[pc]->exec(pkt->getAddr(), this, pu);
+        crf[pc]->exec(pkt->getAddr(), this, pu, pkt->isWrite());
     } else {
+        if (crf[pc]->getType() == "MOV") {
+            pim_stats.data_instrs_executed++;
+        } else {
+            pim_stats.alu_instrs_executed++;
+        }
         if (all_bank_mode) {
             uint8_t bank = decodeBank(pkt->getAddr());
             for (uint8_t pu = 0; pu < processing_units.size(); ++pu) {
@@ -680,14 +755,14 @@ PIMInterface::executeKernel(PacketPtr pkt)
                 Addr addr = modifyAddrForBank(
                     pkt->getAddr(), bank); // Modify address to target the
                                            // correct bank for this PU
-                crf[pc]->exec(addr, this, pu);
+                crf[pc]->exec(addr, this, pu, pkt->isWrite());
                 bank += 2;
             }
         } else {
             uint8_t pu = decodeBank(pkt->getAddr()) / 2;
             DPRINTF(PIM, "Executing instruction %d %s from PU %d\n", pc,
                     crf[pc]->getType(), pu);
-            crf[pc]->exec(pkt->getAddr(), this, pu);
+            crf[pc]->exec(pkt->getAddr(), this, pu, pkt->isWrite());
         }
         ++pc;
     }
@@ -730,7 +805,7 @@ PIMInterface::ControlInstruction::ControlInstruction(PIMInstructionType _type,
 
 void
 PIMInterface::ControlInstruction::exec(Addr addr, PIMInterface *pim,
-                                       uint8_t pu)
+                                       uint8_t pu, bool is_write)
 {
     switch (type) {
         case NOP:
@@ -770,10 +845,11 @@ PIMInterface::DataInstruction::DataInstruction(
 {}
 
 void
-PIMInterface::DataInstruction::exec(Addr addr, PIMInterface *pim, uint8_t pu)
+PIMInterface::DataInstruction::exec(Addr addr, PIMInterface *pim, uint8_t pu,
+                                    bool is_write)
 {
-    int16_t *src0_vector = pim->getVector(pu, src0, src0_idx, addr);
-    int16_t *dest_vector = pim->getVector(pu, dest, dest_idx, addr);
+    int16_t *src0_vector = pim->getVector(pu, src0, src0_idx, addr, is_write);
+    int16_t *dest_vector = pim->getVector(pu, dest, dest_idx, addr, is_write);
     switch (type) {
         case MOV:
             for (int i = 0; i < pim->getSIMDWidth(); ++i) {
@@ -804,13 +880,14 @@ PIMInterface::ALUInstruction::ALUInstruction(PIMInstructionType _type,
 {}
 
 void
-PIMInterface::ALUInstruction::exec(Addr addr, PIMInterface *pim, uint8_t pu)
+PIMInterface::ALUInstruction::exec(Addr addr, PIMInterface *pim, uint8_t pu,
+                                   bool is_write)
 {
-    int16_t *op0_vector = pim->getVector(pu, src0, src0_idx, addr);
-    int16_t *op1_vector = pim->getVector(pu, src1, src1_idx, addr);
-    int16_t *dest_vector = pim->getVector(pu, dest, dest_idx, addr);
-    int16_t *op2_vector =
-        pim->getVector(pu, src2, src1_idx, addr); // src2 uses src1_idx
+    int16_t *op0_vector = pim->getVector(pu, src0, src0_idx, addr, is_write);
+    int16_t *op1_vector = pim->getVector(pu, src1, src1_idx, addr, is_write);
+    int16_t *dest_vector = pim->getVector(pu, dest, dest_idx, addr, is_write);
+    int16_t *op2_vector = pim->getVector(pu, src2, src1_idx, addr,
+                                         is_write); // src2 uses src1_idx
 
     switch (type) {
         case ADD:

@@ -21,6 +21,23 @@ namespace memory
 class PIMInterface : public DRAMInterface
 {
   private:
+    struct PIMStats : public statistics::Group
+    {
+        PIMStats(PIMInterface &_pim);
+
+        PIMInterface &pim_intr;
+        statistics::Scalar ctrl_instrs_executed;
+        statistics::Scalar data_instrs_executed;
+        statistics::Scalar alu_instrs_executed;
+        statistics::Scalar grf_reads;
+        statistics::Scalar grf_writes;
+        statistics::Scalar crf_reads;
+        statistics::Scalar crf_writes;
+        statistics::Scalar srf_reads;
+        statistics::Scalar srf_writes;
+        statistics::Scalar pim_mode_switches;
+        statistics::Scalar all_bank_mode_switches;
+    } pim_stats;
     enum PIMInstructionType
     {
         NOP = 0,
@@ -55,7 +72,7 @@ class PIMInterface : public DRAMInterface
         PIMInstruction(PIMInstructionType _type = NOP);
         std::string getType();
         virtual void
-        exec(Addr addr, PIMInterface *pim, uint8_t pu)
+        exec(Addr addr, PIMInterface *pim, uint8_t pu, bool is_write)
         {
             panic("exec() not implemented for base PIMInstruction class\n");
         }
@@ -72,7 +89,8 @@ class PIMInterface : public DRAMInterface
       public:
         ControlInstruction(PIMInstructionType _type, int8_t _imm0,
                            int8_t _imm1);
-        void exec(Addr addr, PIMInterface *pim, uint8_t pu) override;
+        void exec(Addr addr, PIMInterface *pim, uint8_t pu,
+                  bool is_write) override;
         void rst() override;
     };
 
@@ -87,7 +105,8 @@ class PIMInterface : public DRAMInterface
         DataInstruction(PIMInstructionType _type, Operand _dest,
                         uint32_t _dest_idx, Operand _src0, uint32_t _src0_idx,
                         bool _do_relu);
-        void exec(Addr addr, PIMInterface *pim, uint8_t pu) override;
+        void exec(Addr addr, PIMInterface *pim, uint8_t pu,
+                  bool is_write) override;
     };
 
     class ALUInstruction : public PIMInstruction
@@ -100,7 +119,8 @@ class PIMInterface : public DRAMInterface
         ALUInstruction(PIMInstructionType _type, Operand _dest,
                        uint32_t _dest_idx, Operand _src0, uint32_t _src0_idx,
                        Operand _src1, uint32_t _src1_idx, Operand _src2);
-        void exec(Addr addr, PIMInterface *pim, uint8_t pu) override;
+        void exec(Addr addr, PIMInterface *pim, uint8_t pu,
+                  bool is_write) override;
     };
 
     /*
@@ -147,8 +167,8 @@ class PIMInterface : public DRAMInterface
      */
     Addr pim_range_start;
     uint8_t decodeBank(Addr pkt_addr);
-    int16_t *getVector(uint8_t pu, Operand op_type, uint32_t op_idx,
-                       Addr addr);
+    int16_t *getVector(uint8_t pu, Operand op_type, uint32_t op_idx, Addr addr,
+                       bool is_write);
     PIMInstruction *format_instruction(uint32_t raw_instr);
     Addr modifyAddrForBank(Addr original_addr, uint8_t target_bank);
     void executeKernel(PacketPtr pkt);
@@ -162,6 +182,7 @@ class PIMInterface : public DRAMInterface
     void incrementPC();
     void decrementPC(uint8_t stride);
     void deactivatePIMMode();
+    bool inPIMMode();
     uint8_t getSIMDWidth();
     ~PIMInterface();
 };
