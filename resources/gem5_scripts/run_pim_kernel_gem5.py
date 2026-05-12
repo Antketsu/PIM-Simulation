@@ -116,7 +116,7 @@ memory = SingleChannelDDR4_2400(size="3GB")
 
 processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.MINOR)
 
-kernel_path = "/homelocal/antoma19_local/u/tfm/pim-resources/binaries/"
+kernel_path = "/homelocal/antoma19_local/u/pim/resources/binaries/"
 
 board = None
 

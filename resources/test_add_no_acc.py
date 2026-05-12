@@ -2,7 +2,7 @@
 import subprocess
 import threading
 
-gem5_path="/homelocal/antoma19_local/u/tfm/gem5-pim/build/ARM/gem5.opt"
+gem5_path="../gem5-pim/build/ARM/gem5.opt"
 config_file="gem5_scripts/run_pim_kernel_gem5.py"
 
 def run_simulation(size):

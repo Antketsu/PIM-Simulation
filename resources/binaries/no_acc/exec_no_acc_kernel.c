@@ -68,6 +68,7 @@ int main(int argc, char *argv[]) {
 
 
     if(kernel == 0){
+        init_matrix_mult(A, B, rows_A, cols_A, rows_B, cols_B);
         add(A, B, C, rows_C, cols_C);
         print_matrix(C, rows_C, cols_C);
     }

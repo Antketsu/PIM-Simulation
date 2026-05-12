@@ -90,6 +90,7 @@ void write_add_block(uint8_t op_idx){
 }
 
 
+
 int add(pim_operand A, pim_operand B, pim_operand C){
     m5_work_begin(0, 0);
     uint64_t elems = A.rows * A.cols;
@@ -119,20 +120,26 @@ int add(pim_operand A, pim_operand B, pim_operand C){
         // ACTIVATE ALL BANKS MODE
         *(uint8_t *)(pim_region + 4) = 1; // Writing to this address activates the mode for all banks  
     }
-    // ACTIVATE PIM MODE
-    pim_region[0] = 1; // Writing to this address activates PIM mode
     
     int16_t dummy1, dummy2; //For fake memory access
-    for(int i = 0; i < loops; ++i){
-        for(int j = 0; j < regs; ++j){
-            dummy1 = read_operand(&A, (i * regs + j) * SIMD_WIDTH); // Read to A's address to trigger the MOV instruction
-            dummy2 = read_operand(&B, (i * regs + j) * SIMD_WIDTH); // Read to B's address to trigger the ADD instruction
-            write_operand(&C, (i * regs + j) * SIMD_WIDTH, 0); // Write to C's address to trigger the MOV instruction to write back the result
+    uint8_t executions = loops / 256;
+    printf("Loops: %d, Executions: %d\n", loops, executions);
+    loops = (loops > 256) ? 256 : loops;
+    printf("Loops after adjustment: %d\n", loops);
+    for(int e = 0; e < executions; ++e){
+        // ACTIVATE PIM MODE
+        pim_region[0] = 1; // Writing to this address activates PIM mode
+        for(int i = 0; i < loops; ++i){
+            for(int j = 0; j < regs; ++j){
+                dummy1 = read_operand(&A, (i * regs + j) * SIMD_WIDTH); // Read to A's address to trigger the MOV instruction
+                dummy2 = read_operand(&B, (i * regs + j) * SIMD_WIDTH); // Read to B's address to trigger the ADD instruction
+                write_operand(&C, (i * regs + j) * SIMD_WIDTH, 0); // Write to C's address to trigger the MOV instruction to write back the result
+            }
+            if(loops > 1)
+                write_operand(&C, 0, 0); // Some memory access to trigger the execution of JUMP
         }
-        if(loops > 1)
-            write_operand(&C, 0, 0); // Some memory access to trigger the execution of JUMP
+        write_operand(&C, 0, 0); // Some memory access to trigger the execution of EXIT
     }
-    write_operand(&C, 0, 0); // Some memory access to trigger the execution of EXIT
     if(processing_units > 1){
         // DEACTIVATE ALL BANKS MODE
         *(uint8_t *)(pim_region + 4) = 0; // Writing to this address deactivates the mode for all banks  
