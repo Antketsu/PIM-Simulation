@@ -4,7 +4,7 @@ CC = aarch64-linux-gnu-gcc
 
 
 
-CFLAGS = -I$(GEM5_PATH)/include
+CFLAGS = -O3 -march=armv8-a+simd -I$(GEM5_PATH)/include
 LDFLAGS = -L$(GEM5_PATH)/util/m5/build/$(ISA)/out -static
 LDLIBS = -lm5
 

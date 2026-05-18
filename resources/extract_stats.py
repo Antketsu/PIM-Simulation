@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import re
 
-OUTPUT_CSV = 'resumen_gem5.csv'
+OUTPUT_CSV = 'resumen_gem5_2.csv'
 
 def parse_stats(folder_path):
     stats_file = os.path.join(folder_path, 'stats.txt')
@@ -67,12 +67,12 @@ def parse_stats(folder_path):
 def main():
     resultados = []
     kernels = ['add', 'mul']
-    modes = ['_no_acc_', '_all_cores']
+    modes = ['no_acc', 'no_acc_opt', 'all_cores']
     sizes = [128, 256, 512, 1024]
     for kernel in kernels:
         for mode in modes:
             for size in sizes:
-                folder_name = f"{kernel}{mode}{size}x{size}"
+                folder_name = f"{kernel}_{mode}_{size}x{size}"
                 folder_path = os.path.join("test_out", folder_name)
                 print(f"Procesando {folder_path}...")
                 res = parse_stats(folder_path)

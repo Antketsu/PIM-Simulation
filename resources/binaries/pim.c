@@ -123,6 +123,7 @@ int add(pim_operand A, pim_operand B, pim_operand C){
     
     int16_t dummy1, dummy2; //For fake memory access
     uint8_t executions = loops / 256;
+    executions += (loops % 256) ? 1 : 0;
     printf("Loops: %d, Executions: %d\n", loops, executions);
     loops = (loops > 256) ? 256 : loops;
     printf("Loops after adjustment: %d\n", loops);
@@ -185,6 +186,7 @@ typedef struct{
 } idx_t;
 
 int matrix_multiplication(pim_operand A, pim_operand B, pim_operand C){
+    m5_work_begin(0, 0);
     if(A.cols != B.rows || C.rows != A.rows || C.cols != B.cols)
         return 1;
     uint16_t loops = B.cols / (SIMD_WIDTH * processing_units);
@@ -234,6 +236,7 @@ int matrix_multiplication(pim_operand A, pim_operand B, pim_operand C){
             }while(colB_idx < loops);
             read_mul_operand(&C, 0); // Some memory access to trigger the execution of EXIT
         }
+    m5_work_end(0, 0);
     return 0;
 }
 

@@ -38,7 +38,7 @@ PIM::PIM(ParseXML *XML_interface, InputParameter* ip):
     dynp.clockRate = XML_interface->sys.pim.clockRate * 1e6; // Convertir MHz a Hz
     dynp.executionTime = executionTime;
     dynp.core_ty = Inorder; // Asumimos un pipeline in-order para el PIM
-    dynp.num_fpus = 16;
+    dynp.num_fpus = 4;
     dynp.num_alus = 0;
     fp_unit = new FunctionalUnit(XML_interface, 0, &local_ip, dynp, FPU);
     // Sumar las áreas de los componentes al área del objeto PIM
@@ -62,10 +62,10 @@ void PIM::computeEnergy(bool is_tdp) {
         power.reset();
 
         // 2. Calcular FPU (TDP)
-        fp_unit->stats_t.readAc.access = 16; // 16 ALUs activas
+        fp_unit->stats_t.readAc.access = 4; // 16 ALUs activas
         fp_unit->coredynp.FPU_duty_cycle = 1.0;
         fp_unit->computeEnergy(true);
-        // En TDP, FunctionalUnit::power ya viene escalado por num_alus internamente
+        // En TDP, FunctionalUnit::power ya viene escalado por num_fpus internamente
         power = power + fp_unit->power;
 
         // 4. Acumular todo en el objeto power del PIM usando sobrecarga de '+'
@@ -77,7 +77,7 @@ void PIM::computeEnergy(bool is_tdp) {
 
         // 2. Calcular FPU (Runtime - Bypass del hardcoding)
         fp_unit->computeEnergy(false); 
-        double pim_fpu_ops = XML->sys.pim.fpu_accesses * 16;
+        double pim_fpu_ops = XML->sys.pim.fpu_accesses * 4;
         // Calculamos energía total (Joules)
         cout << "PIM FPU Ops: " << pim_fpu_ops << ", Execution Time: " << executionTime << " s" << endl;
         cout << "Per Access Energy: " << fp_unit->per_access_energy << " J, Base Energy: " << fp_unit->base_energy << " J" << endl;

@@ -7,7 +7,7 @@ config_file="gem5_scripts/run_pim_kernel_gem5.py"
 
 def run_simulation(size):
     print(f"Running simulation for size {size}x{size}...")
-    outdir=f"add_all_cores{size}x{size}"
+    outdir=f"add_all_cores_{size}x{size}"
     script_args = f"--kernel add --rowsA {size} --colsA {size} --rowsB {size} --colsB {size} --rowsC {size} --colsC {size} --all_banks"
     command = f"{gem5_path} -d ./test_out/{outdir} -r {config_file} {script_args}"
     subprocess.run(command, shell=True, executable="/bin/bash")
