@@ -114,9 +114,49 @@ void print_mul_result(pim_operand* C){
     }
 }
 
+void fill_matrix_test(int16_t* A, int16_t *B, uint32_t rowsA, uint32_t rowsB, uint32_t cols){
+for(int i = 0; i < 5000; ++i){
+        printf("A\n");
+    }
+    for(int i = 0; i < rowsA; ++i){
+        for(int j = 0; j < rowsB; ++j){
+            A[i * rowsB + j] = i;
+        }
+    }
+
+    for(int i = 0; i < 5000; ++i){
+        printf("B\n");
+    }
+
+    int16_t *iter = B;
+    for(int i = 0; i < rowsB; ++i){
+        for(int j = 0; j < cols; j += 16){
+            for(int k = 0; k < 16; ++k){
+                iter[k] = (i == (j + k));
+            }
+            iter = increment_iter(iter);
+        }
+    }
+}
+
+void print_test(int16_t *op, uint32_t rows, uint32_t cols){
+    int16_t *iter = op;
+    for(int i = 0; i < rows; +i){
+        for(int j = 0; j < cols; j += 16){
+            for(int k = 0; k < 16; ++k){
+                printf("C[%d][%d] = %d\n", i, j, iter[k]);
+            }
+            iter = increment_iter(iter);
+        }
+    }
+}
+
+
 int main(int argc, char *argv[]) {
     init_pim();
-    pim_operand A, B, C;
+    printf("AAAAA\n");
+    
+    //pim_operand A, B, C;
     if(argc < 3){
         fprintf(stderr, "Usage: %s <rows> <cols>\n", argv[0]);
         return 1;
@@ -131,28 +171,33 @@ int main(int argc, char *argv[]) {
     uint8_t processing_units = atoi(argv[8]);
 
     set_processing_units(processing_units);    
-
+    /*
     init_operand(&A, rows_A, cols_A);
     init_operand(&B, rows_B, cols_B);
     init_operand(&C, rows_C, cols_C);
+    */
+    int16_t *A, *B, *C;
+    A = malloc(rows_A * cols_A * sizeof(int16_t));
+    init_operand_test(&B, rows_B, cols_B);
+    init_operand_test(&C, rows_C, cols_C);
     m5_exit(0);
 
 
     if(kernel == 0){
+        /*
         fill_matrixs_add(&A, &B);
         if(add(A, B, C)){
             printf("Add error\n");
             exit(1);
         }
         print_add_result(&C);
+        */
     }
     else if(kernel == 1){
-        fill_matrixs_mul(&A, &B);
-        if(matrix_multiplication(A, B, C)){
-            printf("Matrix multiplication error\n");
-            exit(1);
-        }
-        print_mul_result(&C);
+        fill_matrix_test(A, B, rows_A, rows_B, cols_B);
+
+        matrix_multiplication_simplier(A, B, C, rows_A, rows_B, cols_B);    
+        print_test(C, rows_C, cols_C);
     }
     else{
         fprintf(stderr, "Invalid kernel. Use 0 for add and 1 for matrix multiplication.\n");

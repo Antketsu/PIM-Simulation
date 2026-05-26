@@ -129,7 +129,11 @@ class LSQ : public Named
     {
       public:
         /** Owning port */
+        
         LSQ &port;
+
+        /** Tick where it entered the LSQ */
+        Tick pushTick;
 
         /** Instruction which made this request */
         MinorDynInstPtr inst;
@@ -189,6 +193,7 @@ class LSQ : public Named
         };
 
         LSQRequestState state;
+
 
       protected:
         /** BaseMMU::Translation interface */
@@ -731,6 +736,14 @@ class LSQ : public Named
     MinorCPU::MinorCPUPort &getDcachePort() { return dcachePort; }
 
     void minorTrace() const;
+    struct LSQStats : public statistics::Group
+    {
+        LSQStats(MinorCPU &cpu);
+
+        statistics::Scalar totalMemInsts; 
+        statistics::Scalar totalLsqCycles; 
+        statistics::Formula avgLsqCycles;   
+    } stats;
 };
 
 /** Make a suitable packet for the given request.  If the request is a store,

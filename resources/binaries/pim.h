@@ -12,7 +12,10 @@
 #define DATA_INST(opcode, dst, src, relu, dst_idx, src_idx) \
     (opcode << 28) | (dst << 25) | (src << 22) | (relu << 12) | (dst_idx << 8) | (src_idx << 4) | (0)  
 #define ALU_INST(opcode, dst, src0, src1, src2, dst_idx, src0_idx, src1_idx) \
-    (opcode << 28) | (dst << 25) | (src0 << 22) | (src1 << 19) | (dst_idx << 8) | (src0_idx << 4) | (src1_idx)  
+    (opcode << 28) | (dst << 25) | (src0 << 22) | (src1 << 19) | (dst_idx << 8) | (src0_idx << 4) | (src1_idx)
+    
+#define BANK_ROW_FULL_MASK 0x3FF
+#define BANK_ROW_INCREMENT (1 << 14)
 
 typedef struct{
     int16_t *elems;
@@ -28,10 +31,20 @@ typedef struct{
     uint32_t bank_rows;
 } pim_operand;
 
+typedef struct{
+    int16_t *elems;
+    uint32_t rows;
+    uint32_t cols;
+} pim_operand_test;
+
 
 int init_pim();
 int init_operand(pim_operand *op, uint32_t rows, uint32_t cols);
+int init_operand_test(int16_t **op, uint32_t rows, uint32_t cols);
 int add(pim_operand a, pim_operand b, pim_operand c);
 int matrix_multiplication(pim_operand a, pim_operand b, pim_operand c);
+int matrix_multiplication_test(pim_operand a, pim_operand b, pim_operand c);
+int16_t* increment_iter(int16_t *iter);
+int matrix_multiplication_simplier(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, uint32_t B_rows, uint32_t B_cols);
 void set_processing_units(uint8_t num_units);
 uint8_t get_processing_units();

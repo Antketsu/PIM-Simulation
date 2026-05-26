@@ -2256,7 +2256,7 @@ fontsize=14;
 label="l1icaches \n: L1ICache";
 shape=box;
 style="rounded, filled";
-tooltip="addr_ranges&#61;0:18446744073709551615&#10;\assoc&#61;8&#10;\clk_domain&#61;board.clk_domain&#10;\clusivity&#61;mostly_incl&#10;\compressor&#61;Null&#10;\data_latency&#61;1&#10;\demand_mshr_reserve&#61;1&#10;\eventq_index&#61;0&#10;\is_read_only&#61;false&#10;\max_miss_count&#61;0&#10;\move_contractions&#61;true&#10;\mshrs&#61;16&#10;\partitioning_manager&#61;Null&#10;\power_model&#61;&#10;\power_state&#61;board.cache_hierarchy.l1icaches.power_state&#10;\prefetcher&#61;board.cache_hierarchy.l1icaches.prefetcher&#10;\replace_expansions&#61;true&#10;\replacement_policy&#61;board.cache_hierarchy.l1icaches.replacement_policy&#10;\response_latency&#61;1&#10;\sequential_access&#61;false&#10;\size&#61;16384&#10;\system&#61;board&#10;\tag_latency&#61;1&#10;\tags&#61;board.cache_hierarchy.l1icaches.tags&#10;\tgts_per_mshr&#61;20&#10;\warmup_percentage&#61;0&#10;\write_allocator&#61;Null&#10;\write_buffers&#61;8&#10;\writeback_clean&#61;false";
+tooltip="addr_ranges&#61;0:18446744073709551615&#10;\assoc&#61;8&#10;\clk_domain&#61;board.clk_domain&#10;\clusivity&#61;mostly_incl&#10;\compressor&#61;Null&#10;\data_latency&#61;1&#10;\demand_mshr_reserve&#61;1&#10;\eventq_index&#61;0&#10;\is_read_only&#61;false&#10;\max_miss_count&#61;0&#10;\move_contractions&#61;true&#10;\mshrs&#61;16&#10;\partitioning_manager&#61;Null&#10;\power_model&#61;&#10;\power_state&#61;board.cache_hierarchy.l1icaches.power_state&#10;\prefetcher&#61;board.cache_hierarchy.l1icaches.prefetcher&#10;\replace_expansions&#61;true&#10;\replacement_policy&#61;board.cache_hierarchy.l1icaches.replacement_policy&#10;\response_latency&#61;1&#10;\sequential_access&#61;false&#10;\size&#61;32768&#10;\system&#61;board&#10;\tag_latency&#61;1&#10;\tags&#61;board.cache_hierarchy.l1icaches.tags&#10;\tgts_per_mshr&#61;20&#10;\warmup_percentage&#61;0&#10;\write_allocator&#61;Null&#10;\write_buffers&#61;8&#10;\writeback_clean&#61;false";
 board_cache_hierarchy_l1icaches_cpu_side [color="#000000", fillcolor="#7f7c77", fontcolor="#000000", fontname=Arial, fontsize=14, label=cpu_side, shape=box, style="rounded, filled"];
 board_cache_hierarchy_l1icaches_mem_side [color="#000000", fillcolor="#7f7c77", fontcolor="#000000", fontname=Arial, fontsize=14, label=mem_side, shape=box, style="rounded, filled"];
 subgraph cluster_board_cache_hierarchy_l1icaches_tags {
@@ -2268,7 +2268,7 @@ fontsize=14;
 label="tags \n: BaseSetAssoc";
 shape=box;
 style="rounded, filled";
-tooltip="assoc&#61;8&#10;\block_size&#61;64&#10;\clk_domain&#61;board.clk_domain&#10;\entry_size&#61;64&#10;\eventq_index&#61;0&#10;\indexing_policy&#61;board.cache_hierarchy.l1icaches.tags.indexing_policy&#10;\partitioning_manager&#61;Null&#10;\power_model&#61;&#10;\power_state&#61;board.cache_hierarchy.l1icaches.tags.power_state&#10;\replacement_policy&#61;board.cache_hierarchy.l1icaches.replacement_policy&#10;\sequential_access&#61;false&#10;\size&#61;16384&#10;\system&#61;board&#10;\tag_latency&#61;1&#10;\warmup_percentage&#61;0";
+tooltip="assoc&#61;8&#10;\block_size&#61;64&#10;\clk_domain&#61;board.clk_domain&#10;\entry_size&#61;64&#10;\eventq_index&#61;0&#10;\indexing_policy&#61;board.cache_hierarchy.l1icaches.tags.indexing_policy&#10;\partitioning_manager&#61;Null&#10;\power_model&#61;&#10;\power_state&#61;board.cache_hierarchy.l1icaches.tags.power_state&#10;\replacement_policy&#61;board.cache_hierarchy.l1icaches.replacement_policy&#10;\sequential_access&#61;false&#10;\size&#61;32768&#10;\system&#61;board&#10;\tag_latency&#61;1&#10;\warmup_percentage&#61;0";
 subgraph cluster_board_cache_hierarchy_l1icaches_tags_indexing_policy {
 color="#000000";
 fillcolor="#6a6863";
@@ -2278,7 +2278,7 @@ fontsize=14;
 label="indexing_policy \n: TaggedSetAssociative";
 shape=box;
 style="rounded, filled";
-tooltip="assoc&#61;8&#10;\entry_size&#61;64&#10;\eventq_index&#61;0&#10;\size&#61;16384";
+tooltip="assoc&#61;8&#10;\entry_size&#61;64&#10;\eventq_index&#61;0&#10;\size&#61;32768";
 }
 
 subgraph cluster_board_cache_hierarchy_l1icaches_tags_power_state {
@@ -2378,7 +2378,7 @@ fontsize=14;
 label="l1dcaches \n: L1DCache";
 shape=box;
 style="rounded, filled";
-tooltip="addr_ranges&#61;0:18446744073709551615&#10;\assoc&#61;8&#10;\clk_domain&#61;board.clk_domain&#10;\clusivity&#61;mostly_incl&#10;\compressor&#61;Null&#10;\data_latency&#61;1&#10;\demand_mshr_reserve&#61;1&#10;\eventq_index&#61;0&#10;\is_read_only&#61;false&#10;\max_miss_count&#61;0&#10;\move_contractions&#61;true&#10;\mshrs&#61;16&#10;\partitioning_manager&#61;Null&#10;\power_model&#61;&#10;\power_state&#61;board.cache_hierarchy.l1dcaches.power_state&#10;\prefetcher&#61;board.cache_hierarchy.l1dcaches.prefetcher&#10;\replace_expansions&#61;true&#10;\replacement_policy&#61;board.cache_hierarchy.l1dcaches.replacement_policy&#10;\response_latency&#61;1&#10;\sequential_access&#61;false&#10;\size&#61;16384&#10;\system&#61;board&#10;\tag_latency&#61;1&#10;\tags&#61;board.cache_hierarchy.l1dcaches.tags&#10;\tgts_per_mshr&#61;20&#10;\warmup_percentage&#61;0&#10;\write_allocator&#61;Null&#10;\write_buffers&#61;8&#10;\writeback_clean&#61;false";
+tooltip="addr_ranges&#61;0:18446744073709551615&#10;\assoc&#61;8&#10;\clk_domain&#61;board.clk_domain&#10;\clusivity&#61;mostly_incl&#10;\compressor&#61;Null&#10;\data_latency&#61;1&#10;\demand_mshr_reserve&#61;1&#10;\eventq_index&#61;0&#10;\is_read_only&#61;false&#10;\max_miss_count&#61;0&#10;\move_contractions&#61;true&#10;\mshrs&#61;16&#10;\partitioning_manager&#61;Null&#10;\power_model&#61;&#10;\power_state&#61;board.cache_hierarchy.l1dcaches.power_state&#10;\prefetcher&#61;board.cache_hierarchy.l1dcaches.prefetcher&#10;\replace_expansions&#61;true&#10;\replacement_policy&#61;board.cache_hierarchy.l1dcaches.replacement_policy&#10;\response_latency&#61;1&#10;\sequential_access&#61;false&#10;\size&#61;32768&#10;\system&#61;board&#10;\tag_latency&#61;1&#10;\tags&#61;board.cache_hierarchy.l1dcaches.tags&#10;\tgts_per_mshr&#61;20&#10;\warmup_percentage&#61;0&#10;\write_allocator&#61;Null&#10;\write_buffers&#61;8&#10;\writeback_clean&#61;false";
 board_cache_hierarchy_l1dcaches_cpu_side [color="#000000", fillcolor="#7f7c77", fontcolor="#000000", fontname=Arial, fontsize=14, label=cpu_side, shape=box, style="rounded, filled"];
 board_cache_hierarchy_l1dcaches_mem_side [color="#000000", fillcolor="#7f7c77", fontcolor="#000000", fontname=Arial, fontsize=14, label=mem_side, shape=box, style="rounded, filled"];
 subgraph cluster_board_cache_hierarchy_l1dcaches_tags {
@@ -2390,7 +2390,7 @@ fontsize=14;
 label="tags \n: BaseSetAssoc";
 shape=box;
 style="rounded, filled";
-tooltip="assoc&#61;8&#10;\block_size&#61;64&#10;\clk_domain&#61;board.clk_domain&#10;\entry_size&#61;64&#10;\eventq_index&#61;0&#10;\indexing_policy&#61;board.cache_hierarchy.l1dcaches.tags.indexing_policy&#10;\partitioning_manager&#61;Null&#10;\power_model&#61;&#10;\power_state&#61;board.cache_hierarchy.l1dcaches.tags.power_state&#10;\replacement_policy&#61;board.cache_hierarchy.l1dcaches.replacement_policy&#10;\sequential_access&#61;false&#10;\size&#61;16384&#10;\system&#61;board&#10;\tag_latency&#61;1&#10;\warmup_percentage&#61;0";
+tooltip="assoc&#61;8&#10;\block_size&#61;64&#10;\clk_domain&#61;board.clk_domain&#10;\entry_size&#61;64&#10;\eventq_index&#61;0&#10;\indexing_policy&#61;board.cache_hierarchy.l1dcaches.tags.indexing_policy&#10;\partitioning_manager&#61;Null&#10;\power_model&#61;&#10;\power_state&#61;board.cache_hierarchy.l1dcaches.tags.power_state&#10;\replacement_policy&#61;board.cache_hierarchy.l1dcaches.replacement_policy&#10;\sequential_access&#61;false&#10;\size&#61;32768&#10;\system&#61;board&#10;\tag_latency&#61;1&#10;\warmup_percentage&#61;0";
 subgraph cluster_board_cache_hierarchy_l1dcaches_tags_indexing_policy {
 color="#000000";
 fillcolor="#6a6863";
@@ -2400,7 +2400,7 @@ fontsize=14;
 label="indexing_policy \n: TaggedSetAssociative";
 shape=box;
 style="rounded, filled";
-tooltip="assoc&#61;8&#10;\entry_size&#61;64&#10;\eventq_index&#61;0&#10;\size&#61;16384";
+tooltip="assoc&#61;8&#10;\entry_size&#61;64&#10;\eventq_index&#61;0&#10;\size&#61;32768";
 }
 
 subgraph cluster_board_cache_hierarchy_l1dcaches_tags_power_state {
@@ -2538,7 +2538,7 @@ fontsize=14;
 label="l2cache \n: L2Cache";
 shape=box;
 style="rounded, filled";
-tooltip="addr_ranges&#61;0:18446744073709551615&#10;\assoc&#61;16&#10;\clk_domain&#61;board.clk_domain&#10;\clusivity&#61;mostly_incl&#10;\compressor&#61;Null&#10;\data_latency&#61;10&#10;\demand_mshr_reserve&#61;1&#10;\eventq_index&#61;0&#10;\is_read_only&#61;false&#10;\max_miss_count&#61;0&#10;\move_contractions&#61;true&#10;\mshrs&#61;20&#10;\partitioning_manager&#61;Null&#10;\power_model&#61;&#10;\power_state&#61;board.cache_hierarchy.l2cache.power_state&#10;\prefetcher&#61;board.cache_hierarchy.l2cache.prefetcher&#10;\replace_expansions&#61;true&#10;\replacement_policy&#61;board.cache_hierarchy.l2cache.replacement_policy&#10;\response_latency&#61;1&#10;\sequential_access&#61;false&#10;\size&#61;262144&#10;\system&#61;board&#10;\tag_latency&#61;10&#10;\tags&#61;board.cache_hierarchy.l2cache.tags&#10;\tgts_per_mshr&#61;12&#10;\warmup_percentage&#61;0&#10;\write_allocator&#61;Null&#10;\write_buffers&#61;8&#10;\writeback_clean&#61;false";
+tooltip="addr_ranges&#61;0:18446744073709551615&#10;\assoc&#61;16&#10;\clk_domain&#61;board.clk_domain&#10;\clusivity&#61;mostly_incl&#10;\compressor&#61;Null&#10;\data_latency&#61;10&#10;\demand_mshr_reserve&#61;1&#10;\eventq_index&#61;0&#10;\is_read_only&#61;false&#10;\max_miss_count&#61;0&#10;\move_contractions&#61;true&#10;\mshrs&#61;20&#10;\partitioning_manager&#61;Null&#10;\power_model&#61;&#10;\power_state&#61;board.cache_hierarchy.l2cache.power_state&#10;\prefetcher&#61;board.cache_hierarchy.l2cache.prefetcher&#10;\replace_expansions&#61;true&#10;\replacement_policy&#61;board.cache_hierarchy.l2cache.replacement_policy&#10;\response_latency&#61;1&#10;\sequential_access&#61;false&#10;\size&#61;524288&#10;\system&#61;board&#10;\tag_latency&#61;10&#10;\tags&#61;board.cache_hierarchy.l2cache.tags&#10;\tgts_per_mshr&#61;12&#10;\warmup_percentage&#61;0&#10;\write_allocator&#61;Null&#10;\write_buffers&#61;8&#10;\writeback_clean&#61;false";
 board_cache_hierarchy_l2cache_cpu_side [color="#000000", fillcolor="#7f7c77", fontcolor="#000000", fontname=Arial, fontsize=14, label=cpu_side, shape=box, style="rounded, filled"];
 board_cache_hierarchy_l2cache_mem_side [color="#000000", fillcolor="#7f7c77", fontcolor="#000000", fontname=Arial, fontsize=14, label=mem_side, shape=box, style="rounded, filled"];
 subgraph cluster_board_cache_hierarchy_l2cache_tags {
@@ -2550,7 +2550,7 @@ fontsize=14;
 label="tags \n: BaseSetAssoc";
 shape=box;
 style="rounded, filled";
-tooltip="assoc&#61;16&#10;\block_size&#61;64&#10;\clk_domain&#61;board.clk_domain&#10;\entry_size&#61;64&#10;\eventq_index&#61;0&#10;\indexing_policy&#61;board.cache_hierarchy.l2cache.tags.indexing_policy&#10;\partitioning_manager&#61;Null&#10;\power_model&#61;&#10;\power_state&#61;board.cache_hierarchy.l2cache.tags.power_state&#10;\replacement_policy&#61;board.cache_hierarchy.l2cache.replacement_policy&#10;\sequential_access&#61;false&#10;\size&#61;262144&#10;\system&#61;board&#10;\tag_latency&#61;10&#10;\warmup_percentage&#61;0";
+tooltip="assoc&#61;16&#10;\block_size&#61;64&#10;\clk_domain&#61;board.clk_domain&#10;\entry_size&#61;64&#10;\eventq_index&#61;0&#10;\indexing_policy&#61;board.cache_hierarchy.l2cache.tags.indexing_policy&#10;\partitioning_manager&#61;Null&#10;\power_model&#61;&#10;\power_state&#61;board.cache_hierarchy.l2cache.tags.power_state&#10;\replacement_policy&#61;board.cache_hierarchy.l2cache.replacement_policy&#10;\sequential_access&#61;false&#10;\size&#61;524288&#10;\system&#61;board&#10;\tag_latency&#61;10&#10;\warmup_percentage&#61;0";
 subgraph cluster_board_cache_hierarchy_l2cache_tags_indexing_policy {
 color="#000000";
 fillcolor="#6a6863";
@@ -2560,7 +2560,7 @@ fontsize=14;
 label="indexing_policy \n: TaggedSetAssociative";
 shape=box;
 style="rounded, filled";
-tooltip="assoc&#61;16&#10;\entry_size&#61;64&#10;\eventq_index&#61;0&#10;\size&#61;262144";
+tooltip="assoc&#61;16&#10;\entry_size&#61;64&#10;\eventq_index&#61;0&#10;\size&#61;524288";
 }
 
 subgraph cluster_board_cache_hierarchy_l2cache_tags_power_state {

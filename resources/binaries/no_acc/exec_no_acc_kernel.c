@@ -15,45 +15,19 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint32_t rows, uint32_t cols){
 }
 
 
-void mult(const int16_t *__restrict__ A,
-    const int16_t *__restrict__ B,
-    int16_t *__restrict__ C,
-    uint32_t rows,
-    uint32_t cols){
+void mult(int16_t* A, int16_t* B, int16_t* C, uint32_t rows_C, uint32_t cols_C){
     m5_work_begin(0, 0);
-    // Inicializar C a 0
-    for (uint32_t i = 0; i < rows; ++i) {
-        for (uint32_t j = 0; j < cols; ++j) {
-            C[i * cols + j] = 0;
-        }
-    }
-
-    // Multiplicación de matrices con NEON (acumulación en int32x4_t)
-    for (uint32_t i = 0; i < rows; ++i) {
-        for (uint32_t j = 0; j < cols; j += 4) {  // Procesar 4 elementos de C a la vez
-            int32x4_t c_vec_s32 = vdupq_n_s32(0);  // Acumulador en int32x4_t (inicializado a 0)
-
-            for (uint32_t k = 0; k < cols; ++k) {
-                int16_t a = A[i * cols + k];
-                int16x4_t a_vec = vdup_n_s16(a);          // Replicar 'a' en 4 elementos
-                int16x4_t b_vec = vld1_s16(&B[k * cols + j]);  // Cargar 4 elementos de B
-
-                // Multiplicar y promover a int32_t (vmull_s16 devuelve int32x4_t)
-                int32x4_t prod = vmull_s16(a_vec, b_vec);
-
-                // Sumar al acumulador (en int32x4_t)
-                c_vec_s32 = vaddq_s32(c_vec_s32, prod);
+    for(int i = 0; i < rows_C; ++i){
+        for (int j = 0; j < cols_C; j++) {
+            C[i * cols_C + j] = 0;
+            for(int k = 0; k < cols_C; ++k){
+                C[i * cols_C + j] += A[i * cols_C + k] * B[k * cols_C + j];
             }
-
-            // Truncar a int16_t (asumiendo que no hay overflow)
-            int16x4_t c_vec = vqmovn_s32(c_vec_s32);
-
-            // Almacenar resultado en C
-            vst1_s16(&C[i * cols + j], c_vec);
         }
     }
     m5_work_end(0, 0);
 }
+
 
 void print_matrix(int16_t* C, uint32_t rows, uint32_t cols){
     for(int i = 0; i < rows; ++i){
@@ -89,9 +63,9 @@ int main(int argc, char *argv[]) {
     uint32_t cols_C = atoi(argv[6]);
     uint8_t kernel = atoi(argv[7]);
     
-    int16_t *A = (int16_t *)aligned_alloc(16, rows_A * cols_A * sizeof(int16_t));
-    int16_t *B = (int16_t *)aligned_alloc(16, rows_B * cols_B * sizeof(int16_t));
-    int16_t *C = (int16_t *)aligned_alloc(16, rows_C * cols_C * sizeof(int16_t));
+    int16_t *A = (int16_t *)malloc(rows_A * cols_A * sizeof(int16_t));
+    int16_t *B = (int16_t *)malloc(rows_B * cols_B * sizeof(int16_t));
+    int16_t *C = (int16_t *)malloc(rows_C * cols_C * sizeof(int16_t));
 
 
     if(kernel == 0){

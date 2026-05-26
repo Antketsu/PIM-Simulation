@@ -24,6 +24,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--no_acc", action="store_true", help="indicate to execute the kernel without accelerator")
     parser.add_argument("--all_banks", action="store_true", help="indicate to execute the kernel that uses all banks")
+    parser.add_argument("--opt", action="store_true", help="indicate to execute the optimized kernel")
     parser.add_argument("--kernel", help="kernel to execute")
     parser.add_argument("--rowsA", type=int, help="number of rows in matrix A")
     parser.add_argument("--rowsB", type=int, help="number of rows in matrix B")
@@ -52,6 +53,48 @@ elemsC = args.rowsC * args.colsC
 elems_per_bank_C = elemsC // processing_units
 rows_C = elems_per_bank_C // ELEMS_PER_ROW
 rows_C = rows_C + 1 if elems_per_bank_C % ELEMS_PER_ROW != 0 else rows_C
+
+def exit_handler_test():
+    process = processor.get_cores()[0].core.workload[0]
+    # VA, PA, Size, Cacheable
+    process.map(0x10000000, 0xC4000000, 0x1000000, False) # PIM region
+    print("Mapped memory region at VA 0x10000000 to PA 0xC4000000")
+
+    row_size = 0x00003FFF 
+    bank_increment = 0x00000800 #We add two bank indexes
+    even_bank_physical_address = 0xD0000000
+    even_bank_virtual_address = 0x30000000
+    row_increment = 0x00040000
+    
+    odd_bank_physical_address = 0xD0000400
+    odd_bank_virtual_address = 0x20000000
+    # Operand B in bank 1
+    for i in range(processing_units):
+        print("Mapping B in bank {}".format(i))
+        physical_address = odd_bank_physical_address
+        virtual_address = odd_bank_virtual_address
+        for j in range(rows_B):
+             process.map(virtual_address, physical_address, row_size, False) 
+             print("Mapped memory region at VA 0x{:x} to PA 0x{:x}".format(virtual_address, physical_address))
+             virtual_address += row_increment
+             physical_address += row_increment
+        odd_bank_physical_address += bank_increment
+        odd_bank_virtual_address += bank_increment
+    # Operand C in bank 0
+    for i in range(processing_units):
+        print("Mapping C in bank {}".format(i))
+        physical_address = even_bank_physical_address
+        virtual_address = odd_bank_virtual_address
+        for j in range(rows_C):
+             process.map(virtual_address, physical_address, row_size, False) 
+             print("Mapped memory region at VA 0x{:x} to PA 0x{:x}".format(virtual_address, physical_address))
+             virtual_address += row_increment
+             physical_address += row_increment
+        even_bank_physical_address += bank_increment
+        even_bank_virtual_address += bank_increment
+    yield False
+    yield True
+
 
 def exit_handler():
     process = processor.get_cores()[0].core.workload[0]
@@ -101,13 +144,12 @@ def exit_handler():
     yield False
     yield True
 
-
 cache_hierarchy = PrivateL1SharedL2CacheHierarchy(
-    l1d_size="16kB",
+    l1d_size="32kB",
     l1d_assoc=8,
-    l1i_size="16kB",
+    l1i_size="32kB",
     l1i_assoc=8,
-    l2_size="256kB",
+    l2_size="512kB",
     l2_assoc=16,
 )
 
@@ -129,7 +171,12 @@ if args.no_acc:
         memory=memory,
         cache_hierarchy=cache_hierarchy,
     )
-    kernel_path += "no_acc/exec_no_acc_kernel"
+    if args.opt:
+        print("Running optimized kernel")
+        kernel_path += "no_acc/exec_no_acc_kernel_opt"
+    else:
+        print("Running non-optimized kernel")
+        kernel_path += "no_acc/exec_no_acc_kernel"
 else:
     pim = PIMAccelerator(size="3GB")
     board = PIMBoard(
@@ -163,7 +210,9 @@ board.set_se_binary_workload(
 
 simulator = None
 
-handler = exit_handler()
+handler = exit_handler_test()
+
+print(f"Running {kernel_path}")
 
 if args.no_acc:
     simulator = Simulator(

@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import re
 
-OUTPUT_CSV = 'resumen_gem5_2.csv'
+OUTPUT_CSV = 'resumen_gem5.csv'
 
 def parse_stats(folder_path):
     stats_file = os.path.join(folder_path, 'stats.txt')
@@ -58,6 +58,12 @@ def parse_stats(folder_path):
                 elif name in ['board.memory.mem_ctrl.dram.writeBursts', 
                               'board.pim.mem_ctrl.dram.writeBursts']:
                     data['total_mem_writes'] += int(val)
+                elif name == 'board.processor.cores.core.lsq.totalMemInsts':
+                    data['lsq_total_mem_insts'] = int(val)
+                elif name == 'board.processor.cores.core.lsq.totalLsqCycles':
+                    data['lsq_total_cycles'] = int(val)
+                elif name == 'board.processor.cores.core.lsq.avgLsqCycles':
+                    data['lsq_avg_cycles'] = float(val)
 
     # Calculamos la columna final de accesos a memoria
     data['mem_total_accesses'] = data['total_mem_reads'] + data['total_mem_writes']
@@ -81,7 +87,7 @@ def main():
     # Crear DataFrame y guardar
     df = pd.DataFrame(resultados)
     # Seleccionar y reordenar columnas finales
-    cols = ['folder', 'sim_seconds', 'cache_accesses', 'mem_total_accesses']
+    cols = ['folder', 'sim_seconds', 'cache_accesses', 'mem_total_accesses', 'lsq_total_mem_insts', 'lsq_total_cycles', 'lsq_avg_cycles']
     df = df[cols]
     
     df.to_csv(OUTPUT_CSV, index=False)

@@ -1422,7 +1422,8 @@ LSQ::LSQ(std::string name_, std::string dcache_port_name_,
     numStoresInTransfers(0),
     numAccessesIssuedToMemory(0),
     retryRequest(NULL),
-    cacheBlockMask(~(cpu_.cacheLineSize() - 1))
+    cacheBlockMask(~(cpu_.cacheLineSize() - 1)),
+    stats(cpu_)
 {
     if (in_memory_system_limit < 1) {
         fatal("%s: executeMaxAccessesInMemory must be >= 1 (%d)\n", name_,
@@ -1463,6 +1464,18 @@ LSQ::LSQRequest::~LSQRequest()
         delete packet;
     if (data)
         delete [] data;
+}
+
+LSQ::LSQStats::LSQStats(MinorCPU &cpu)
+    : statistics::Group(&cpu, "lsq"),
+    ADD_STAT(totalMemInsts, statistics::units::Count::get(),
+             "Total number of memory instructions completed"),
+    ADD_STAT(totalLsqCycles, statistics::units::Cycle::get(),
+             "Total time in seconds spent on instructions in the LSQ"),
+    ADD_STAT(avgLsqCycles, statistics::units::Cycle::get(),
+             "Average time in seconds per instruction in the LSQ")
+{
+    avgLsqCycles = totalLsqCycles / totalMemInsts; 
 }
 
 /**
@@ -1523,8 +1536,11 @@ LSQ::popResponse(LSQ::LSQRequestPtr response)
     assert(!transfers.empty() && transfers.front() == response);
 
     transfers.pop();
+    // Update stats
+    Tick latencyTicks = curTick() - response->pushTick;
+    stats.totalLsqCycles += cpu.ticksToCycles(latencyTicks);
 
-    if (!response->isLoad)
+    if (!response->isLoad) 
         numStoresInTransfers--;
 
     if (response->issuedToMemory)
@@ -1656,9 +1672,10 @@ LSQ::pushRequest(MinorDynInstPtr inst, bool isLoad, uint8_t *data,
     }
 
     requests.push(request);
+    request->pushTick = curTick();
     inst->inLSQ = true;
     request->startAddrTranslation();
-
+    stats.totalMemInsts++;
     return inst->translationFault;
 }
 

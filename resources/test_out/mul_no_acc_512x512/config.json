@@ -173,7 +173,7 @@
                     },
                     "response_latency": 1,
                     "sequential_access": false,
-                    "size": 16384,
+                    "size": 32768,
                     "system": "board",
                     "tag_latency": 1,
                     "tags": {
@@ -194,7 +194,7 @@
                             "assoc": 8,
                             "entry_size": 64,
                             "eventq_index": 0,
-                            "size": 16384
+                            "size": 32768
                         },
                         "partitioning_manager": null,
                         "power_model": [],
@@ -213,7 +213,7 @@
                         },
                         "replacement_policy": "board.cache_hierarchy.l1dcaches.replacement_policy",
                         "sequential_access": false,
-                        "size": 16384,
+                        "size": 32768,
                         "system": "board",
                         "tag_latency": 1,
                         "warmup_percentage": 0
@@ -347,7 +347,7 @@
                     },
                     "response_latency": 1,
                     "sequential_access": false,
-                    "size": 16384,
+                    "size": 32768,
                     "system": "board",
                     "tag_latency": 1,
                     "tags": {
@@ -368,7 +368,7 @@
                             "assoc": 8,
                             "entry_size": 64,
                             "eventq_index": 0,
-                            "size": 16384
+                            "size": 32768
                         },
                         "partitioning_manager": null,
                         "power_model": [],
@@ -387,7 +387,7 @@
                         },
                         "replacement_policy": "board.cache_hierarchy.l1icaches.replacement_policy",
                         "sequential_access": false,
-                        "size": 16384,
+                        "size": 32768,
                         "system": "board",
                         "tag_latency": 1,
                         "warmup_percentage": 0
@@ -580,7 +580,7 @@
                 },
                 "response_latency": 1,
                 "sequential_access": false,
-                "size": 262144,
+                "size": 524288,
                 "system": "board",
                 "tag_latency": 10,
                 "tags": {
@@ -601,7 +601,7 @@
                         "assoc": 16,
                         "entry_size": 64,
                         "eventq_index": 0,
-                        "size": 262144
+                        "size": 524288
                     },
                     "partitioning_manager": null,
                     "power_model": [],
@@ -620,7 +620,7 @@
                     },
                     "replacement_policy": "board.cache_hierarchy.l2cache.replacement_policy",
                     "sequential_access": false,
-                    "size": 262144,
+                    "size": 524288,
                     "system": "board",
                     "tag_latency": 10,
                     "warmup_percentage": 0
@@ -2710,7 +2710,7 @@
                                 "name": "workload",
                                 "path": "board.processor.cores.core.workload",
                                 "cmd": [
-                                    "/homelocal/antoma19_local/u/tfm/pim-resources/binaries/no_acc/exec_no_acc_kernel",
+                                    "/homelocal/antoma19_local/u/pim/resources/binaries/no_acc/exec_no_acc_kernel",
                                     "512",
                                     "512",
                                     "512",
@@ -2720,14 +2720,14 @@
                                     "1",
                                     "1"
                                 ],
-                                "cwd": "/homelocal/antoma19_local/u/tfm/pim-resources",
+                                "cwd": "/homelocal/antoma19_local/u/pim/resources",
                                 "drivers": [],
                                 "egid": 100,
                                 "env": [],
                                 "errout": "cerr",
                                 "euid": 100,
                                 "eventq_index": 0,
-                                "executable": "/homelocal/antoma19_local/u/tfm/pim-resources/binaries/no_acc/exec_no_acc_kernel",
+                                "executable": "/homelocal/antoma19_local/u/pim/resources/binaries/no_acc/exec_no_acc_kernel",
                                 "gid": 100,
                                 "input": "cin",
                                 "kvmInSE": false,

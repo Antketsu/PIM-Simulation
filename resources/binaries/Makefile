@@ -6,7 +6,7 @@ CC = aarch64-linux-gnu-gcc
 PIM_DIR = ..
 
 
-CFLAGS = -O0 -I$(GEM5_PATH)/include -I$(PIM_DIR)
+CFLAGS = -g -O0 -I$(GEM5_PATH)/include -I$(PIM_DIR)
 LDFLAGS = -L$(GEM5_PATH)/util/m5/build/$(ISA)/out -static
 LDLIBS = -lm5
 
