@@ -28,63 +28,15 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-args = parse_args()
-processing_units = 8 
-ELEMS_PER_ROW = 512
 
-elemsA = args.rowsA * args.colsA
-elems_per_bank_A = elemsA // processing_units
-rows_A = elems_per_bank_A // ELEMS_PER_ROW
-rows_A = rows_A + 1 if elems_per_bank_A % ELEMS_PER_ROW != 0 else rows_A
-
-elemsB = args.rowsB * args.colsB
-elems_per_bank_B = elemsB // processing_units
-rows_B = elems_per_bank_B // ELEMS_PER_ROW
-rows_B = rows_B + 1 if elems_per_bank_B % ELEMS_PER_ROW != 0 else rows_B
-
-elemsC = args.rowsC * args.colsC
-elems_per_bank_C = elemsC // processing_units
-rows_C = elems_per_bank_C // ELEMS_PER_ROW
-rows_C = rows_C + 1 if elems_per_bank_C % ELEMS_PER_ROW != 0 else rows_C
-
-def exit_handler_test():
+def exit_handler():
     process = processor.get_cores()[0].core.workload[0]
     # VA, PA, Size, Cacheable
     process.map(0x10000000, 0xC4000000, 0x1000000, False) # PIM region
     print("Mapped memory region at VA 0x10000000 to PA 0xC4000000")
 
-    row_size = 0x00003FFF 
-    bank_increment = 0x00000800 #We add two bank indexes
-    even_bank_physical_address = 0xD0000000
-    even_bank_virtual_address = 0x30000000
-    row_increment = 0x00040000
-    
-    odd_bank_physical_address = 0xD0000400
-    odd_bank_virtual_address = 0x20000000
-    # Operand B in bank 1
-    for i in range(processing_units):
-        print("Mapping B in bank {}".format(i))
-        physical_address = odd_bank_physical_address
-        virtual_address = odd_bank_virtual_address
-        for j in range(rows_B):
-             process.map(virtual_address, physical_address, row_size, False) 
-             print("Mapped memory region at VA 0x{:x} to PA 0x{:x}".format(virtual_address, physical_address))
-             virtual_address += row_increment
-             physical_address += row_increment
-        odd_bank_physical_address += bank_increment
-        odd_bank_virtual_address += bank_increment
-    # Operand C in bank 0
-    for i in range(processing_units):
-        print("Mapping C in bank {}".format(i))
-        physical_address = even_bank_physical_address
-        virtual_address = odd_bank_virtual_address
-        for j in range(rows_C):
-             process.map(virtual_address, physical_address, row_size, False) 
-             print("Mapped memory region at VA 0x{:x} to PA 0x{:x}".format(virtual_address, physical_address))
-             virtual_address += row_increment
-             physical_address += row_increment
-        even_bank_physical_address += bank_increment
-        even_bank_virtual_address += bank_increment
+    process.map(0x20000000, 0xD0000000, 0xFFFFFFF, False)
+
     yield False
     yield True
 
@@ -103,7 +55,7 @@ memory = SingleChannelDDR4_2400(size="3GB")
 
 processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.MINOR)
 
-kernel_path = "/homelocal/antoma19_local/u/pim/resources/binaries/"
+kernel_path = "/home/antonio/U/laburo/PIM-Simulation/resources/binaries/acc/mult"
 
 pim = PIMAccelerator(size="3GB")
 
@@ -115,38 +67,24 @@ board = PIMBoard(
     pim=pim,
 )
 
-kernel_codes = {
-    "add": 0,
-    "mul": 1,
-}
+args = parse_args()
 
 board.set_se_binary_workload(
     binary=BinaryResource(kernel_path),
     arguments=[str(args.rowsA),
-                str(args.colsA),
                 str(args.rowsB),
                 str(args.colsB),
-                str(args.rowsC),
-                str(args.colsC),
-                str(kernel_codes[args.kernel]),
-                str(processing_units)],)
+                ])
 
-simulator = None
+handler = exit_handler()
 
-handler = exit_handler_test()
-
-print(f"Running {kernel_path}")
-
-if args.no_acc:
-    simulator = Simulator(
-        board=board,
-    )
-else:
-    simulator = Simulator(
+simulator = Simulator(
         board=board,
         on_exit_event= {
             ExitEvent.EXIT: handler,
         }
     )
+
+print(f"Running {kernel_path}")
     
 simulator.run()

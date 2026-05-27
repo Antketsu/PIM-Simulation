@@ -1,4 +1,4 @@
-GEM5_PATH = /homelocal/antoma19_local/u/tfm/gem5-pim
+GEM5_PATH = /home/antonio/U/laburo/PIM-Simulation/gem5-pim
 ISA = arm64
 CC = aarch64-linux-gnu-gcc
 
@@ -9,7 +9,7 @@ LDFLAGS = -L$(GEM5_PATH)/util/m5/build/$(ISA)/out -static
 LDLIBS = -lm5
 
 
-SOURCES = exec_no_acc_kernel.c
+SOURCES = $(wildcard *.c)
 
 TARGETS = $(SOURCES:.c=)
 

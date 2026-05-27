@@ -20,10 +20,10 @@
 </g>
 <g id="clust2" class="cluster">
 <title>cluster_board</title>
-<g id="a_clust2"><a xlink:title="auto_unlink_shared_backstore=false&#10;cache_line_size=64&#10;eventq_index=0&#10;exit_on_work_items=true&#10;external_memory_ranges=&#10;init_param=0&#10;m5ops_base=4294901760&#10;mem_mode=timing&#10;mem_ranges=0:3221225472 3221225472:6442450944&#10;memories=board.memory.mem_ctrl.dram board.pim.mem_ctrl.dram&#10;mmap_using_noreserve=false&#10;multi_thread=false&#10;&#10;um_work_ids=16&#10;&#13;eadfile=&#10;&#13;edirect_paths=&#10;shadow_rom_ranges=&#10;shared_backstore=&#10;symbolfile=&#10;thermal_components=&#10;thermal_model=Null&#10;work_begin_ckpt_count=0&#10;work_begin_cpu_id_exit=&#45;1&#10;work_begin_exit_count=0&#10;work_cpus_ckpt_count=0&#10;work_end_ckpt_count=0&#10;work_end_exit_count=0&#10;work_item_id=&#45;1&#10;workload=board.workload">
+<g id="a_clust2"><a xlink:title="auto_unlink_shared_backstore=false&#10;cache_line_size=64&#10;eventq_index=0&#10;exit_on_work_items=true&#10;external_memory_ranges=&#10;init_param=0&#10;m5ops_base=4294901760&#10;mem_mode=timing&#10;mem_ranges=0:3221225472&#10;memories=board.memory.mem_ctrl.dram&#10;mmap_using_noreserve=false&#10;multi_thread=false&#10;&#10;um_work_ids=16&#10;&#13;eadfile=&#10;&#13;edirect_paths=&#10;shadow_rom_ranges=&#10;shared_backstore=&#10;symbolfile=&#10;thermal_components=&#10;thermal_model=Null&#10;work_begin_ckpt_count=0&#10;work_begin_cpu_id_exit=&#45;1&#10;work_begin_exit_count=0&#10;work_cpus_ckpt_count=0&#10;work_end_ckpt_count=0&#10;work_end_exit_count=0&#10;work_item_id=&#45;1&#10;workload=board.workload">
 <path fill="#e4e7eb" stroke="#000000" d="M28,-16C28,-16 965,-16 965,-16 971,-16 977,-22 977,-28 977,-28 977,-888 977,-888 977,-894 971,-900 965,-900 965,-900 28,-900 28,-900 22,-900 16,-894 16,-888 16,-888 16,-28 16,-28 16,-22 22,-16 28,-16"/>
 <text text-anchor="middle" x="496.5" y="-884.8" font-family="Arial" font-size="14.00" fill="#000000">board </text>
-<text text-anchor="middle" x="496.5" y="-869.8" font-family="Arial" font-size="14.00" fill="#000000">: PIMBoard</text>
+<text text-anchor="middle" x="496.5" y="-869.8" font-family="Arial" font-size="14.00" fill="#000000">: SimpleBoard</text>
 </a>
 </g>
 </g>
@@ -75,18 +75,18 @@
 <g id="clust177" class="cluster">
 <title>cluster_board_memory</title>
 <g id="a_clust177"><a xlink:title="eventq_index=0&#10;thermal_domain=Null">
-<path fill="#bab6ae" stroke="#000000" d="M350,-710C350,-710 466,-710 466,-710 472,-710 478,-716 478,-722 478,-722 478,-842 478,-842 478,-848 472,-854 466,-854 466,-854 350,-854 350,-854 344,-854 338,-848 338,-842 338,-842 338,-722 338,-722 338,-716 344,-710 350,-710"/>
-<text text-anchor="middle" x="408" y="-838.8" font-family="Arial" font-size="14.00" fill="#000000">memory </text>
-<text text-anchor="middle" x="408" y="-823.8" font-family="Arial" font-size="14.00" fill="#000000">: ChanneledMemory</text>
+<path fill="#bab6ae" stroke="#000000" d="M250,-710C250,-710 366,-710 366,-710 372,-710 378,-716 378,-722 378,-722 378,-842 378,-842 378,-848 372,-854 366,-854 366,-854 250,-854 250,-854 244,-854 238,-848 238,-842 238,-842 238,-722 238,-722 238,-716 244,-710 250,-710"/>
+<text text-anchor="middle" x="308" y="-838.8" font-family="Arial" font-size="14.00" fill="#000000">memory </text>
+<text text-anchor="middle" x="308" y="-823.8" font-family="Arial" font-size="14.00" fill="#000000">: ChanneledMemory</text>
 </a>
 </g>
 </g>
 <g id="clust178" class="cluster">
 <title>cluster_board_memory_mem_ctrl</title>
 <g id="a_clust178"><a xlink:title="clk_domain=board.clk_domain&#10;command_window=10000&#10;disable_sanity_check=false&#10;dram=board.memory.mem_ctrl.dram&#10;eventq_index=0&#10;mem_sched_policy=frfcfs&#10;min_reads_per_switch=16&#10;min_writes_per_switch=16&#10;power_model=&#10;power_state=board.memory.mem_ctrl.power_state&#10;qos_policy=Null&#10;qos_priorities=1&#10;qos_priority_escalation=false&#10;qos_q_policy=fifo&#10;qos_requestors= &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#10;qos_syncro_scheduler=false&#10;qos_turnaround_policy=Null&#10;static_backend_latency=10000&#10;static_frontend_latency=10000&#10;system=board&#10;write_high_thresh_perc=85&#10;write_low_thresh_perc=50">
-<path fill="#9f9c95" stroke="#000000" d="M358,-718C358,-718 411,-718 411,-718 417,-718 423,-724 423,-730 423,-730 423,-796 423,-796 423,-802 417,-808 411,-808 411,-808 358,-808 358,-808 352,-808 346,-802 346,-796 346,-796 346,-730 346,-730 346,-724 352,-718 358,-718"/>
-<text text-anchor="middle" x="384.5" y="-792.8" font-family="Arial" font-size="14.00" fill="#000000">mem_ctrl </text>
-<text text-anchor="middle" x="384.5" y="-777.8" font-family="Arial" font-size="14.00" fill="#000000">: MemCtrl</text>
+<path fill="#9f9c95" stroke="#000000" d="M275,-718C275,-718 328,-718 328,-718 334,-718 340,-724 340,-730 340,-730 340,-796 340,-796 340,-802 334,-808 328,-808 328,-808 275,-808 275,-808 269,-808 263,-802 263,-796 263,-796 263,-730 263,-730 263,-724 269,-718 275,-718"/>
+<text text-anchor="middle" x="301.5" y="-792.8" font-family="Arial" font-size="14.00" fill="#000000">mem_ctrl </text>
+<text text-anchor="middle" x="301.5" y="-777.8" font-family="Arial" font-size="14.00" fill="#000000">: MemCtrl</text>
 </a>
 </g>
 </g>
@@ -150,24 +150,6 @@
 <path fill="#9f9c95" stroke="#000000" d="M388,-292C388,-292 550,-292 550,-292 556,-292 562,-298 562,-304 562,-304 562,-370 562,-370 562,-376 556,-382 550,-382 550,-382 388,-382 388,-382 382,-382 376,-376 376,-370 376,-370 376,-304 376,-304 376,-298 382,-292 388,-292"/>
 <text text-anchor="middle" x="469" y="-366.8" font-family="Arial" font-size="14.00" fill="#000000">l2cache </text>
 <text text-anchor="middle" x="469" y="-351.8" font-family="Arial" font-size="14.00" fill="#000000">: L2Cache</text>
-</a>
-</g>
-</g>
-<g id="clust221" class="cluster">
-<title>cluster_board_pim</title>
-<g id="a_clust221"><a xlink:title="eventq_index=0&#10;thermal_domain=Null">
-<path fill="#bab6ae" stroke="#000000" d="M249,-710C249,-710 318,-710 318,-710 324,-710 330,-716 330,-722 330,-722 330,-842 330,-842 330,-848 324,-854 318,-854 318,-854 249,-854 249,-854 243,-854 237,-848 237,-842 237,-842 237,-722 237,-722 237,-716 243,-710 249,-710"/>
-<text text-anchor="middle" x="283.5" y="-838.8" font-family="Arial" font-size="14.00" fill="#000000">pim </text>
-<text text-anchor="middle" x="283.5" y="-823.8" font-family="Arial" font-size="14.00" fill="#000000">: PIM</text>
-</a>
-</g>
-</g>
-<g id="clust222" class="cluster">
-<title>cluster_board_pim_mem_ctrl</title>
-<g id="a_clust222"><a xlink:title="clk_domain=board.clk_domain&#10;command_window=10000&#10;disable_sanity_check=false&#10;dram=board.pim.mem_ctrl.dram&#10;eventq_index=0&#10;mem_sched_policy=frfcfs&#10;min_reads_per_switch=16&#10;min_writes_per_switch=16&#10;power_model=&#10;power_state=board.pim.mem_ctrl.power_state&#10;qos_policy=Null&#10;qos_priorities=1&#10;qos_priority_escalation=false&#10;qos_q_policy=fifo&#10;qos_requestors= &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#10;qos_syncro_scheduler=false&#10;qos_turnaround_policy=Null&#10;static_backend_latency=10000&#10;static_frontend_latency=10000&#10;system=board&#10;write_high_thresh_perc=85&#10;write_low_thresh_perc=50">
-<path fill="#9f9c95" stroke="#000000" d="M257,-718C257,-718 310,-718 310,-718 316,-718 322,-724 322,-730 322,-730 322,-796 322,-796 322,-802 316,-808 310,-808 310,-808 257,-808 257,-808 251,-808 245,-802 245,-796 245,-796 245,-730 245,-730 245,-724 251,-718 257,-718"/>
-<text text-anchor="middle" x="283.5" y="-792.8" font-family="Arial" font-size="14.00" fill="#000000">mem_ctrl </text>
-<text text-anchor="middle" x="283.5" y="-777.8" font-family="Arial" font-size="14.00" fill="#000000">: PIMCtrl</text>
 </a>
 </g>
 </g>
@@ -246,8 +228,8 @@
 <!-- board_memory_mem_ctrl_port -->
 <g id="node5" class="node">
 <title>board_memory_mem_ctrl_port</title>
-<path fill="#7f7c77" stroke="#000000" d="M396,-762C396,-762 366,-762 366,-762 360,-762 354,-756 354,-750 354,-750 354,-738 354,-738 354,-732 360,-726 366,-726 366,-726 396,-726 396,-726 402,-726 408,-732 408,-738 408,-738 408,-750 408,-750 408,-756 402,-762 396,-762"/>
-<text text-anchor="middle" x="381" y="-740.3" font-family="Arial" font-size="14.00" fill="#000000">port</text>
+<path fill="#7f7c77" stroke="#000000" d="M316,-762C316,-762 286,-762 286,-762 280,-762 274,-756 274,-750 274,-750 274,-738 274,-738 274,-732 280,-726 286,-726 286,-726 316,-726 316,-726 322,-726 328,-732 328,-738 328,-738 328,-750 328,-750 328,-756 322,-762 316,-762"/>
+<text text-anchor="middle" x="301" y="-740.3" font-family="Arial" font-size="14.00" fill="#000000">port</text>
 </g>
 <!-- board_cache_hierarchy_membus_mem_side_ports -->
 <g id="node7" class="node">
@@ -258,8 +240,8 @@
 <!-- board_memory_mem_ctrl_port&#45;&gt;board_cache_hierarchy_membus_mem_side_ports -->
 <g id="edge5" class="edge">
 <title>board_memory_mem_ctrl_port&#45;&gt;board_cache_hierarchy_membus_mem_side_ports</title>
-<path fill="none" stroke="black" d="M367.1,-716.94C350.72,-686.23 323.99,-636.11 310.07,-610.01"/>
-<polygon fill="black" stroke="black" points="364.03,-718.62 371.82,-725.79 370.21,-715.32 364.03,-718.62"/>
+<path fill="none" stroke="black" d="M301,-715.73C301,-684.94 301,-635.77 301,-610.01"/>
+<polygon fill="black" stroke="black" points="297.5,-715.79 301,-725.79 304.5,-715.79 297.5,-715.79"/>
 </g>
 <!-- board_cache_hierarchy_l2cache_mem_side -->
 <g id="node17" class="node">
@@ -332,18 +314,6 @@
 <title>board_cache_hierarchy_l2cache_cpu_side&#45;&gt;board_cache_hierarchy_l2bus_mem_side_ports</title>
 <path fill="none" stroke="black" d="M504.32,-291.22C496.73,-279.6 486.14,-266.96 473,-260 450.95,-248.32 383.89,-261.93 361,-252 338.12,-242.07 318.01,-221.07 305.72,-206.05"/>
 <polygon fill="black" stroke="black" points="501.35,-293.07 509.54,-299.79 507.33,-289.43 501.35,-293.07"/>
-</g>
-<!-- board_pim_mem_ctrl_port -->
-<g id="node18" class="node">
-<title>board_pim_mem_ctrl_port</title>
-<path fill="#7f7c77" stroke="#000000" d="M302,-762C302,-762 272,-762 272,-762 266,-762 260,-756 260,-750 260,-750 260,-738 260,-738 260,-732 266,-726 272,-726 272,-726 302,-726 302,-726 308,-726 314,-732 314,-738 314,-738 314,-750 314,-750 314,-756 308,-762 302,-762"/>
-<text text-anchor="middle" x="287" y="-740.3" font-family="Arial" font-size="14.00" fill="#000000">port</text>
-</g>
-<!-- board_pim_mem_ctrl_port&#45;&gt;board_cache_hierarchy_membus_mem_side_ports -->
-<g id="edge11" class="edge">
-<title>board_pim_mem_ctrl_port&#45;&gt;board_cache_hierarchy_membus_mem_side_ports</title>
-<path fill="none" stroke="black" d="M289.54,-715.73C292.42,-684.94 297.01,-635.77 299.41,-610.01"/>
-<polygon fill="black" stroke="black" points="286.05,-715.51 288.61,-725.79 293.02,-716.16 286.05,-715.51"/>
 </g>
 </g>
 </svg>

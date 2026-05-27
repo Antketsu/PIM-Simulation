@@ -894,7 +894,7 @@ PIMInterface::ALUInstruction::exec(Addr addr, PIMInterface *pim, uint8_t pu,
             assert(dest == GRF_A || dest == GRF_B);
             for (int i = 0; i < pim->getSIMDWidth(); ++i) {
                 dest_vector[i] = op0_vector[i] + op1_vector[i];
-            }
+            }   
             break;
         case MUL:
             assert(dest == GRF_A || dest == GRF_B);

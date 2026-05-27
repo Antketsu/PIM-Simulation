@@ -60,38 +60,8 @@ def exit_handler_test():
     process.map(0x10000000, 0xC4000000, 0x1000000, False) # PIM region
     print("Mapped memory region at VA 0x10000000 to PA 0xC4000000")
 
-    row_size = 0x00003FFF 
-    bank_increment = 0x00000800 #We add two bank indexes
-    even_bank_physical_address = 0xD0000000
-    even_bank_virtual_address = 0x30000000
-    row_increment = 0x00040000
-    
-    odd_bank_physical_address = 0xD0000400
-    odd_bank_virtual_address = 0x20000000
-    # Operand B in bank 1
-    for i in range(processing_units):
-        print("Mapping B in bank {}".format(i))
-        physical_address = odd_bank_physical_address
-        virtual_address = odd_bank_virtual_address
-        for j in range(rows_B):
-             process.map(virtual_address, physical_address, row_size, False) 
-             print("Mapped memory region at VA 0x{:x} to PA 0x{:x}".format(virtual_address, physical_address))
-             virtual_address += row_increment
-             physical_address += row_increment
-        odd_bank_physical_address += bank_increment
-        odd_bank_virtual_address += bank_increment
-    # Operand C in bank 0
-    for i in range(processing_units):
-        print("Mapping C in bank {}".format(i))
-        physical_address = even_bank_physical_address
-        virtual_address = odd_bank_virtual_address
-        for j in range(rows_C):
-             process.map(virtual_address, physical_address, row_size, False) 
-             print("Mapped memory region at VA 0x{:x} to PA 0x{:x}".format(virtual_address, physical_address))
-             virtual_address += row_increment
-             physical_address += row_increment
-        even_bank_physical_address += bank_increment
-        even_bank_virtual_address += bank_increment
+    process.map(0x20000000, 0xD0000000, 0xFFFFFFF, False)
+
     yield False
     yield True
 
@@ -158,7 +128,7 @@ memory = SingleChannelDDR4_2400(size="3GB")
 
 processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.MINOR)
 
-kernel_path = "/homelocal/antoma19_local/u/pim/resources/binaries/"
+kernel_path = "/home/antonio/U/laburo/PIM-Simulation/resources/binaries/"
 
 board = None
 
