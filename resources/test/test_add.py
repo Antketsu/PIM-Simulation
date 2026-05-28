@@ -2,8 +2,8 @@
 import subprocess
 import threading
 
-gem5_path="../gem5-pim/build/ARM/gem5.opt"
-config_file="gem5_scripts/add_acc.py"
+gem5_path="../../gem5-pim/build/ARM/gem5.opt"
+config_file="../gem5_scripts/add_acc.py"
 
 def run_simulation(size):
     print(f"Running simulation for size {size}x{size}...")

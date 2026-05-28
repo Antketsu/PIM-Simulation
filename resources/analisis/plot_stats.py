@@ -77,7 +77,7 @@ def generar_graficas_sin_solapamiento(csv_file):
 
     sns.set_theme(style="whitegrid")
 
-    for k_name in ['add', 'mul', 'gemmv']:
+    for k_name in ['add', 'mul', 'gemv']:
         df_k = df[df['folder'].str.contains(k_name, case=False)].copy()
         if df_k.empty: continue
         metrics = [

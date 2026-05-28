@@ -83,7 +83,7 @@ def main():
     # Group 1: kernel (add, mul, gemmv)
     # Group 2: mode (acc, no_acc, no_acc_opt)
     # Group 3: rows / cols (cualquier par de números separados por 'x')
-    pattern = re.compile(r"^(add|mul|gemmv)_(acc|no_acc_opt|no_acc)_(\d+x\d+)$")
+    pattern = re.compile(r"^(add|mul|gemv)_(acc|no_acc_opt)_(\d+x\d+)$")
 
     print(f"Escaneando carpetas en {base_path}...\n")
     

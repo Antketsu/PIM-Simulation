@@ -39,90 +39,6 @@ int init_operand(int16_t **op){
     return 0;
 }
 
-/*
-
-uint16_t read_operand(pim_operand* op, int idx){
-    uint32_t elems = op->rows * op->cols;
-    uint32_t elems_per_bank = elems / PUs;
-    uint32_t row_idx = idx / ELEMS_PER_ROW;
-    return op->banks[0][row_idx].elems[idx % ELEMS_PER_ROW];
-}
-
-void write_operand(pim_operand* op, int idx, int16_t value){
-    uint32_t elems = op->rows * op->cols;
-    uint32_t elems_per_bank = elems / PUs;
-    uint32_t row_idx = idx / ELEMS_PER_ROW;
-    op->banks[0][row_idx].elems[idx % ELEMS_PER_ROW] = value;
-}
-
-void write_add_block(uint8_t op_idx){
-    //MOV GRF_A0, BAN0
-    crf[instr_idx++] = DATA_INST(3, 1, 3, 0, op_idx, 0);
-    //ADD GRF_B0, GRF_A0, BANK1
-    crf[instr_idx++] = ALU_INST(4, 2, 1, 4, 0, op_idx, op_idx, 0);
-    // MOV BANK0, GRF_B0
-    crf[instr_idx++] = DATA_INST(3, 3, 2, 0, 0, op_idx);
-}
-
-
-
-int add(pim_operand A, pim_operand B, pim_operand C){
-    m5_work_begin(0, 0);
-    uint64_t elems = A.rows * A.cols;
-    if(elems != B.rows * B.cols || elems != C.rows * C.cols)
-        return 1;
-
-    int16_t *v1 = A.banks[0][0].elems; 
-    int16_t *v2 = B.banks[0][0].elems;
-    int16_t *v3 = C.banks[0][0].elems;
-
-    uint32_t elems_per_pu = elems / PUs;
-    uint8_t regs = 8;
-    uint16_t loops = elems_per_pu / (SIMD_WIDTH * regs);
-    for(int i = 0; i < regs; ++i){
-        write_add_block(i);
-    }
-    if(loops > 1){
-        // JUMP 3, loops
-        crf[instr_idx++] = CTL_INST(1, 3 * regs, loops - 1);
-    }
-    // EXIT
-    crf[instr_idx++] = CTL_INST(2, 0 , 0);     
-    if(PUs > 1){
-        // ACTIVATE ALL BANKS MODE
-        *(uint8_t *)(pim_region + 4) = 1; // Writing to this address activates the mode for all banks  
-    }
-    
-    int16_t dummy1, dummy2; //For fake memory access
-    uint8_t executions = loops / 256;
-    executions += (loops % 256) ? 1 : 0;
-    printf("Loops: %d, Executions: %d\n", loops, executions);
-    loops = (loops > 256) ? 256 : loops;
-    printf("Loops after adjustment: %d\n", loops);
-    for(int e = 0; e < executions; ++e){
-        // ACTIVATE PIM MODE
-        pim_region[0] = 1; // Writing to this address activates PIM mode
-        for(int i = 0; i < loops; ++i){
-            for(int j = 0; j < regs; ++j){
-                dummy1 = read_operand(&A, (i * regs + j) * SIMD_WIDTH); // Read to A's address to trigger the MOV instruction
-                dummy2 = read_operand(&B, (i * regs + j) * SIMD_WIDTH); // Read to B's address to trigger the ADD instruction
-                write_operand(&C, (i * regs + j) * SIMD_WIDTH, 0); // Write to C's address to trigger the MOV instruction to write back the result
-            }
-            if(loops > 1)
-                write_operand(&C, 0, 0); // Some memory access to trigger the execution of JUMP
-        }
-        write_operand(&C, 0, 0); // Some memory access to trigger the execution of EXIT
-    }
-    if(PUs > 1){
-        // DEACTIVATE ALL BANKS MODE
-        *(uint8_t *)(pim_region + 4) = 0; // Writing to this address deactivates the mode for all banks  
-    }
-    m5_work_end(0, 0);
-    return 0;
-}
-
-*/
-
 void write_add_block(uint8_t op_idx){
     //MOV GRF_A0, BAN0
     crf[instr_idx++] = DATA_INST(3, 1, 3, 0, op_idx, 0);
@@ -137,41 +53,67 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
     uint32_t elems_per_pu = elems / PUs;
     uint8_t regs = 8;
     uint16_t loops = elems_per_pu / (SIMD_WIDTH * regs);
+    
     for(int i = 0; i < regs; ++i){
         write_add_block(i);
     }
     if(loops > 1){
-        // JUMP 3, loops
         crf[instr_idx++] = CTL_INST(1, 3 * regs, loops - 1);
     }
-    // EXIT
     crf[instr_idx++] = CTL_INST(2, 0 , 0);     
-    *(uint8_t *)(pim_region + 4) = 1; // Writing to this address activates the mode for all banks  
     
-    int16_t dummy; //For fake memory access
+    *(uint8_t *)(pim_region + 4) = 1; 
+    
+    int16_t dummy; 
     uint8_t executions = loops / 256;
     executions += (loops % 256) ? 1 : 0;
-    printf("Loops: %d, Executions: %d\n", loops, executions);
     loops = (loops > 256) ? 256 : loops;
-    printf("Loops after adjustment: %d\n", loops);
+
     int16_t *iterA = A, *iterB = B, *iterC = C;
-    uint32_t n_rows = elems >> 13;
+
     for(int e = 0; e < executions; ++e){
-        // ACTIVATE PIM MODE
-        pim_region[0] = 1; // Writing to this address activates PIM mode
-        for(int i = 0; i < loops; ++i){
+        pim_region[0] = 1; 
+        
+        //4-factor unloop
+        for(int i = 0; i < loops; i += 4){
+            
+            
+            // 0-256 bytes
             for(int j = 0; j < regs; ++j){
-                dummy = *(iterA); // Read to A's address to trigger the MOV instruction
-                dummy = *(iterB); // Read to B's address to trigger the ADD instruction
-                *(iterC) = dummy; // Write to C's address to trigger the MOV instruction to write back the result
-                iterA = increment_iter(iterA);
-                iterB = increment_iter(iterB);
-                iterC = increment_iter(iterC);
+                dummy = *(iterA); //MOV
+                dummy = *(iterB); //ADD
+                *(iterC) = dummy; //MOV 
+                iterA += 16; iterB += 16; iterC += 16;
             }
-            if(loops > 1)
-                dummy = *(iterC); // Some memory access to trigger the execution of JUMP
+            if(loops > 1) dummy = *(iterC); 
+
+            // 256-512 bytes
+            for(int j = 0; j < regs; ++j){
+                dummy = *(iterA); dummy = *(iterB); *(iterC) = dummy; 
+                iterA += 16; iterB += 16; iterC += 16;
+            }
+            if(loops > 1) dummy = *(iterC); 
+
+            // 512-768 bytes
+            for(int j = 0; j < regs; ++j){
+                dummy = *(iterA); dummy = *(iterB); *(iterC) = dummy; 
+                iterA += 16; iterB += 16; iterC += 16;
+            }
+            if(loops > 1) dummy = *(iterC); 
+
+            // 768-1024 bytes
+            for(int j = 0; j < regs; ++j){
+                dummy = *(iterA); dummy = *(iterB); *(iterC) = dummy; 
+                iterA += 16; iterB += 16; iterC += 16;
+            }
+            if(loops > 1) dummy = *(iterC); //JUMP
+
+            //End of row
+            iterA = (int16_t*)((uintptr_t)iterA + BANK_ROW_INCREMENT - 1024);
+            iterB = (int16_t*)((uintptr_t)iterB + BANK_ROW_INCREMENT - 1024);
+            iterC = (int16_t*)((uintptr_t)iterC + BANK_ROW_INCREMENT - 1024);
         }
-        dummy = *(iterC); // Some memory access to trigger the execution of EXIT
+        dummy = *(iterC); //EXIT
     }
     m5_work_end(0, 0);
 }
@@ -210,44 +152,59 @@ int matrix_multiplication(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, u
 
     uint32_t rowA_idx = 0, colA_idx = 0;
     *(uint8_t *)(pim_region + 4) = 1; 
-    int16_t *B_iter = B, *C_iter = C, *C_current_row_begin = C;
-    int16_t dummy;
+    
+    volatile int16_t *B_iter = (volatile int16_t *)B;
+    volatile int16_t *C_iter = (volatile int16_t *)C;
+    volatile int16_t *C_current_row_begin = (volatile int16_t *)C;
+    volatile int16_t dummy;
+
     while(rowA_idx * B_rows + colA_idx < A_rows * B_rows){
-        if(colA_idx == B_rows){ //This could have happend in previous iter
+        if(colA_idx == B_rows){ 
             ++rowA_idx;
             colA_idx = 0;
-            B_iter = B;
-            C_current_row_begin = C_iter; //Mantain the C increment in previous loop and update the row begin checkpoint
+            B_iter = (volatile int16_t *)B;
+            C_current_row_begin = C_iter; 
         }
         else{
-            C_iter = C_current_row_begin;  //Back to row begin
+            C_iter = C_current_row_begin;  
         }
+
         for(int i = 0; i < regs; ++i){
             for(int j = 0; j < PUs; ++j){
                 pu_space[j * PU_SIZE + i] = A[rowA_idx * B_rows + colA_idx];
             }
             ++colA_idx;
         }
-        pim_region[0] = 1; // Writing to this address activates PIM mode
-        int colB_idx = 0;        
-        do{
+
+        pim_region[0] = 1; // Activa modo PIM
+
+        for (int colB_idx = 0; colB_idx < loops; ++colB_idx) {
+            
             for(int i = 0; i < regs; ++i){
                 __sync_synchronize();
-                dummy = *(C_iter); // Read to C's address
-                dummy = *(B_iter); // Read to B's address to trigger the MAC instruction 
-                *(C_iter) = dummy; // Write to C's address
-                B_iter = increment_iter(B_iter);
+                dummy = *C_iter; //MOV
+                dummy = *B_iter; //MAC
+                *C_iter = dummy; //MOV
+                B_iter += 16; 
             }
-            C_iter = increment_iter(C_iter);
-            dummy = *(C_iter); // Some memory access to trigger the execution of JUMP
-            ++colB_idx;
-        }while(colB_idx < loops);
-        dummy = *(C_iter); // Some memory access to trigger the execution of EXIT
+            C_iter += 16;    
+            dummy = *C_iter;  // Trigger JUMP
+
+            if (((uintptr_t)B_iter & BANK_ROW_FULL_MASK) == 0) {
+                B_iter = (volatile int16_t*)((uintptr_t)B_iter + BANK_ROW_INCREMENT - 1024);
+            }
+            
+            // Para C: Cada loop consume 1 reg * 32 bytes = 32 bytes.
+            if (((uintptr_t)C_iter & BANK_ROW_FULL_MASK) == 0) {
+                C_iter = (volatile int16_t*)((uintptr_t)C_iter + BANK_ROW_INCREMENT - 1024);
+            }
+        }
+        
+        dummy = *C_iter; // Trigger EXIT
     }
     m5_work_end(0, 0);
     return 0;
 }
-
 
 int init_pim(){
     pim_region = mmap(

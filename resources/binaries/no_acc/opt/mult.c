@@ -14,31 +14,34 @@ void mult(const int16_t *__restrict__ A,
     
     m5_work_begin(0, 0);
 
+    // Inicializar la matriz C a cero si el algoritmo va a acumular sobre ella de forma dispersa
+    // (Asumiendo que C entra limpio o lo limpiamos antes)
+    
     for (uint32_t i = 0; i < M; ++i) {
-        // NOTA: Sigue asumiendo que 'N' (columnas de B) es múltiplo de 4
-        for (uint32_t j = 0; j < N; j += 4) {  
+        for (uint32_t k = 0; k < K; ++k) {
             
-            // Acumulador de 32 bits para los 4 elementos de la fila de C
-            int32x4_t c_vec_s32 = vdupq_n_s32(0);  
+            // 1. CARGA OPTIMIZADA DE A: Se hace una sola vez para TODO el barrido de columnas de B.
+            // Duplicamos el elemento en un vector de 8 elementos de 16 bits (128 bits completos).
+            int16x8_t a_vec = vdupq_n_s16(A[i * K + k]);
 
-            // k recorre la dimensión interna 'K' (columnas de A / filas de B)
-            for (uint32_t k = 0; k < K; ++k) {
-                // El salto de fila en A depende de sus propias columnas ('K')
-                int16_t a = A[i * K + k];
-                int16x4_t a_vec = vdup_n_s16(a);          
+            // 2. BUCLE INTERNO ULTRA-RÁPIDO: Avanza de 8 en 8 elementos (16 bytes por paso)
+            // Esto es 100% contiguo en memoria tanto para B como para C.
+            for (uint32_t j = 0; j < N; j += 8) {  
                 
-                // El salto de fila en B depende de sus propias columnas ('N')
-                int16x4_t b_vec = vld1_s16(&B[k * N + j]);  
+                // Carga los 8 elementos actuales acumulados en C
+                int16x8_t c_vec = vld1q_s16(&C[i * N + j]);
+                
+                // Carga los 8 elementos de la fila de B
+                int16x8_t b_vec = vld1q_s16(&B[k * N + j]);  
 
-                // Multiplicar y acumular en un solo paso
-                c_vec_s32 = vmlal_s16(c_vec_s32, a_vec, b_vec);
+                // Multiplicación y acumulación en 16 bits (NEON realiza la operación)
+                // Nota: Usamos vmlaq_s16 para mantener todo en 16 bits si no hay riesgo de desbordamiento,
+                // o expandimos a 32 bits si es estrictamente necesario por precisión.
+                c_vec = vmlaq_s16(c_vec, a_vec, b_vec);
+
+                // Almacena los 8 elementos de golpe en la memoria/caché
+                vst1q_s16(&C[i * N + j], c_vec);
             }
-
-            // Estrechar de 32 bits a 16 bits (registro D de 64 bits)
-            int16x4_t c_vec = vqmovn_s32(c_vec_s32);
-
-            // El salto de fila en C depende de sus propias columnas ('N')
-            vst1_s16(&C[i * N + j], c_vec);
         }
     }
     
