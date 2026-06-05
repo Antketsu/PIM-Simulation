@@ -69,7 +69,7 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
     executions += (loops % 256) ? 1 : 0;
     loops = (loops > 256) ? 256 : loops;
 
-    int16_t *iterA = A, *iterB = B, *iterC = C;
+    volatile int16_t *iterA = (volatile int16_t * volatile)A, *iterB = (volatile int16_t * volatile)B, *iterC = (volatile int16_t * volatile)C;
 
     for(int e = 0; e < executions; ++e){
         pim_region[0] = 1; 
@@ -153,16 +153,15 @@ int matrix_multiplication(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, u
     uint32_t rowA_idx = 0, colA_idx = 0;
     *(uint8_t *)(pim_region + 4) = 1; 
     
-    volatile int16_t *B_iter = (volatile int16_t *)B;
-    volatile int16_t *C_iter = (volatile int16_t *)C;
-    volatile int16_t *C_current_row_begin = (volatile int16_t *)C;
-    volatile int16_t dummy;
+    volatile int16_t* volatile B_iter = (volatile int16_t* volatile)B;
+    volatile int16_t* volatile C_iter = (volatile int16_t* volatile)C;
+    volatile int16_t *volatile C_current_row_begin = (volatile int16_t* volatile)C;
 
     while(rowA_idx * B_rows + colA_idx < A_rows * B_rows){
         if(colA_idx == B_rows){ 
             ++rowA_idx;
             colA_idx = 0;
-            B_iter = (volatile int16_t *)B;
+            B_iter = (volatile int16_t* volatile)B;
             C_current_row_begin = C_iter; 
         }
         else{
@@ -178,29 +177,36 @@ int matrix_multiplication(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, u
 
         pim_region[0] = 1; // Activa modo PIM
 
+        //asm volatile("dsb sy" ::: "memory");
+
         for (int colB_idx = 0; colB_idx < loops; ++colB_idx) {
             
             for(int i = 0; i < regs; ++i){
-                __sync_synchronize();
-                dummy = *C_iter; //MOV
-                dummy = *B_iter; //MAC
-                *C_iter = dummy; //MOV
+                asm volatile (
+                    "dmb ish\n\t"          // Barrera de hardware absoluta
+                    "ldrsh wzr, [%0]\n\t"  // 1. Lee de C_iter (Provoca MOV) y descarta el dato en wzr (registro cero)
+                    "ldrsh wzr, [%1]\n\t"  // 2. Lee de B_iter (Provoca MAC)
+                    "strh wzr, [%0]\n\t"   // 3. Escribe 0 en C_iter (Provoca MOV)
+                    : 
+                    : "r" (C_iter), "r" (B_iter) // Entradas: pasamos los punteros como registros
+                    : "memory"                   // Indicamos que este bloque altera el estado global de la memoria
+                );
                 B_iter += 16; 
             }
             C_iter += 16;    
-            dummy = *C_iter;  // Trigger JUMP
+            (void)*B_iter;  // Trigger JUMP
 
             if (((uintptr_t)B_iter & BANK_ROW_FULL_MASK) == 0) {
                 B_iter = (volatile int16_t*)((uintptr_t)B_iter + BANK_ROW_INCREMENT - 1024);
             }
             
-            // Para C: Cada loop consume 1 reg * 32 bytes = 32 bytes.
             if (((uintptr_t)C_iter & BANK_ROW_FULL_MASK) == 0) {
                 C_iter = (volatile int16_t*)((uintptr_t)C_iter + BANK_ROW_INCREMENT - 1024);
             }
+            asm volatile ("" ::: "memory");
         }
         
-        dummy = *C_iter; // Trigger EXIT
+        (void)*C_iter; // Trigger EXIT
     }
     m5_work_end(0, 0);
     return 0;

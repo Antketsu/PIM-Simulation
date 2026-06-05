@@ -58,7 +58,7 @@ void init_matrix(int16_t* A, int16_t* B, uint32_t rows_A, uint32_t rows_B, uint3
         for (int j = 0; j < cols_B; j++) {
             B[i * cols_B + j] = (i == j) ? 1 : 0;
         }
-    }
+    } 
 }
 
 void print_matrix(int16_t* C, uint32_t rows, uint32_t cols){
