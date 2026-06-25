@@ -64,7 +64,7 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
     
     *(uint8_t *)(pim_region + 4) = 1; 
     
-    int16_t dummy; 
+    int16_t fake_variable; 
     uint8_t executions = loops / 256;
     executions += (loops % 256) ? 1 : 0;
     loops = (loops > 256) ? 256 : loops;
@@ -72,48 +72,54 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
     volatile int16_t *iterA = (volatile int16_t * volatile)A, *iterB = (volatile int16_t * volatile)B, *iterC = (volatile int16_t * volatile)C;
 
     for(int e = 0; e < executions; ++e){
-        pim_region[0] = 1; 
+        pim_region[0] = 1; // Activate PIM mode
         
         //4-factor unloop
         for(int i = 0; i < loops; i += 4){
             
-            
+                
             // 0-256 bytes
             for(int j = 0; j < regs; ++j){
-                dummy = *(iterA); //MOV
-                dummy = *(iterB); //ADD
-                *(iterC) = dummy; //MOV 
+                fake_variable = *(iterA); //MOV
+                fake_variable = *(iterB); //ADD
+                *(iterC) = fake_variable; //MOV 
                 iterA += 16; iterB += 16; iterC += 16;
             }
-            if(loops > 1) dummy = *(iterC); 
+            fake_variable = *(iterC); //JUMP 
 
             // 256-512 bytes
             for(int j = 0; j < regs; ++j){
-                dummy = *(iterA); dummy = *(iterB); *(iterC) = dummy; 
+                fake_variable = *(iterA);
+                fake_variable = *(iterB);
+                *(iterC) = fake_variable; 
                 iterA += 16; iterB += 16; iterC += 16;
             }
-            if(loops > 1) dummy = *(iterC); 
+            fake_variable = *(iterC); 
 
             // 512-768 bytes
             for(int j = 0; j < regs; ++j){
-                dummy = *(iterA); dummy = *(iterB); *(iterC) = dummy; 
+                fake_variable = *(iterA);
+                fake_variable = *(iterB);
+                *(iterC) = fake_variable; 
                 iterA += 16; iterB += 16; iterC += 16;
             }
-            if(loops > 1) dummy = *(iterC); 
+            fake_variable = *(iterC); 
 
             // 768-1024 bytes
             for(int j = 0; j < regs; ++j){
-                dummy = *(iterA); dummy = *(iterB); *(iterC) = dummy; 
+                fake_variable = *(iterA); 
+                fake_variable = *(iterB);
+                *(iterC) = fake_variable; 
                 iterA += 16; iterB += 16; iterC += 16;
             }
-            if(loops > 1) dummy = *(iterC); //JUMP
+            fake_variable = *(iterC); 
 
             //End of row
             iterA = (int16_t*)((uintptr_t)iterA + BANK_ROW_INCREMENT - 1024);
             iterB = (int16_t*)((uintptr_t)iterB + BANK_ROW_INCREMENT - 1024);
             iterC = (int16_t*)((uintptr_t)iterC + BANK_ROW_INCREMENT - 1024);
         }
-        dummy = *(iterC); //EXIT
+        fake_variable = *(iterC); //EXIT
     }
     m5_work_end(0, 0);
 }
@@ -177,19 +183,18 @@ int matrix_multiplication(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, u
 
         pim_region[0] = 1; // Activa modo PIM
 
-        //asm volatile("dsb sy" ::: "memory");
 
         for (int colB_idx = 0; colB_idx < loops; ++colB_idx) {
             
             for(int i = 0; i < regs; ++i){
                 asm volatile (
                     "dmb ish\n\t"          // Barrera de hardware absoluta
-                    "ldrsh wzr, [%0]\n\t"  // 1. Lee de C_iter (Provoca MOV) y descarta el dato en wzr (registro cero)
-                    "ldrsh wzr, [%1]\n\t"  // 2. Lee de B_iter (Provoca MAC)
-                    "strh wzr, [%0]\n\t"   // 3. Escribe 0 en C_iter (Provoca MOV)
+                    "ldrsh wzr, [%0]\n\t"  // MOV
+                    "ldrsh wzr, [%1]\n\t"  // MAC
+                    "strh wzr, [%0]\n\t"   // MOV
                     : 
-                    : "r" (C_iter), "r" (B_iter) // Entradas: pasamos los punteros como registros
-                    : "memory"                   // Indicamos que este bloque altera el estado global de la memoria
+                    : "r" (C_iter), "r" (B_iter) 
+                    : "memory"                   
                 );
                 B_iter += 16; 
             }
@@ -203,7 +208,6 @@ int matrix_multiplication(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, u
             if (((uintptr_t)C_iter & BANK_ROW_FULL_MASK) == 0) {
                 C_iter = (volatile int16_t*)((uintptr_t)C_iter + BANK_ROW_INCREMENT - 1024);
             }
-            asm volatile ("" ::: "memory");
         }
         
         (void)*C_iter; // Trigger EXIT

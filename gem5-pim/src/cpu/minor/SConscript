@@ -74,3 +74,4 @@ if env['CONF']['BUILD_ISA']:
 
     # For backwards compatibility
     SimObject('MinorCPU.py', sim_objects=[], tags=['isa'])
+    DebugFlag('LSQ_MINOR');

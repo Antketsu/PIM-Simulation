@@ -1,5 +1,6 @@
 #include "mem/pim_interface.hh"
-
+#include "debug/DRAM.hh"
+#include "debug/PIM_PIPELINE.hh"
 namespace gem5
 {
 
@@ -147,13 +148,15 @@ PIMInterface::getVector(uint8_t pu, Operand op_type, uint32_t op_idx,
             }
             return &(pu_ref.srf_a[op_idx][0]);
         case ODD_BANK:
-            DPRINTF(PIM, "Decoding address %#x to bank %d for PU %d\n", addr,
-                    bank, pu);
+            // DPRINTF(PIM, "Decoding address %#x to bank %d for PU %d\n",
+            // addr,
+            //         bank, pu);
             assert(bank == 2 * pu);
             return (int16_t *)toHostAddr(addr);
         case EVEN_BANK:
-            DPRINTF(PIM, "Decoding address %#x to bank %d for PU %d\n", addr,
-                    bank, pu);
+            // DPRINTF(PIM, "Decoding address %#x to bank %d for PU %d\n",
+            // addr,
+            //         bank, pu);
             assert(bank == 2 * pu + 1);
             return (int16_t *)toHostAddr(addr);
         default:
@@ -215,15 +218,11 @@ PIMInterface::format_instruction(uint32_t raw_instr)
 
 void
 PIMInterface::incrementPC()
-{
-    ++pc;
-}
+{ ++pc; }
 
 void
 PIMInterface::decrementPC(uint8_t stride)
-{
-    pc -= stride;
-}
+{ pc -= stride; }
 
 void
 PIMInterface::deactivatePIMMode()
@@ -234,21 +233,17 @@ PIMInterface::deactivatePIMMode()
 
 bool
 PIMInterface::inPIMMode()
-{
-    return pim_mode;
-}
+{ return pim_mode; }
 
 uint8_t
 PIMInterface::getSIMDWidth()
-{
-    return simd_width;
-}
+{ return simd_width; }
 
 std::pair<Tick, Tick>
 PIMInterface::doBurstAccess(MemPacket *mem_pkt, Tick next_burst_at,
                             const std::vector<MemPacketQueue> &queue)
 {
-    DPRINTF(PIM, "Timing access to addr %#x, rank/bank/row %d %d %d\n",
+    DPRINTF(DRAM, "Timing access to addr %#x, rank/bank/row %d %d %d\n",
             mem_pkt->addr, mem_pkt->rank, mem_pkt->bank, mem_pkt->row);
 
     // get the rank
@@ -276,7 +271,7 @@ PIMInterface::doBurstAccess(MemPacket *mem_pkt, Tick next_burst_at,
     Tick col_allowed_at;
     if (pending_to_precharge ||
         (all_bank_mode && pim_mode && bank_ref.openRow != mem_pkt->row)) {
-        DPRINTF(PIM,
+        DPRINTF(DRAM,
                 "Changing mode or in PIM mode with row conflict, precharging "
                 "all banks in rank %d\n",
                 mem_pkt->rank);
@@ -338,40 +333,45 @@ PIMInterface::doBurstAccess(MemPacket *mem_pkt, Tick next_burst_at,
 
     // CHANGE: When we are in PIM mode, we move data internally and we don't
     // need to use the bus
-    Tick burst_gap = 0;
+    // Tick burst_gap = 0;
 
-    if (!pim_mode) {
-        // if we are interleaving bursts, ensure that
-        // 1) we don't double interleave on next burst issue
-        // 2) we are at an interleave boundary; if not, shift to next boundary
-        burst_gap = tBURST_MIN;
-        if (burstInterleave) {
-            if (cmd_at == (rank_ref.lastBurstTick + tBURST_MIN)) {
-                // already interleaving, push next command to end of full burst
-                burst_gap = tBURST;
-            } else if (cmd_at < (rank_ref.lastBurstTick + tBURST)) {
-                // not at an interleave boundary after bandwidth check
-                // Shift command to tBURST boundary to avoid data contention
-                // Command will remain in the same burst window given that
-                // tBURST is less than tBURST_MAX
-                cmd_at = rank_ref.lastBurstTick + tBURST;
-            }
+    Tick burst_gap = tBURST_MIN;
+    if (burstInterleave) {
+        if (cmd_at == (rank_ref.lastBurstTick + tBURST_MIN)) {
+            // already interleaving, push next command to end of full burst
+            burst_gap = tBURST;
+        } else if (cmd_at < (rank_ref.lastBurstTick + tBURST)) {
+            // not at an interleave boundary after bandwidth check
+            // Shift command to tBURST boundary to avoid data contention
+            // Command will remain in the same burst window given that
+            // tBURST is less than tBURST_MAX
+            cmd_at = rank_ref.lastBurstTick + tBURST;
         }
     }
+    // if (!pim_mode) {
+    //  if we are interleaving bursts, ensure that
+    //  1) we don't double interleave on next burst issue
+    //  2) we are at an interleave boundary; if not, shift to next boundary
+    //}
 
-    DPRINTF(PIM, "Schedule RD/WR burst at tick %d\n", cmd_at);
+    DPRINTF(DRAM, "Schedule RD/WR burst at tick %d\n", cmd_at);
 
     // CHANGE: PIM Pipeline delay
     // 5 pipeline stages
     // Samsung's paper says that the frequency of HBM2 DRAM is 4× slower than
     // the memory bus frequency TO-DO: Parameter cycles
-    Tick pim_pipeline_delay = pim_mode ? (5 * 4 * tCK) : 0;
+    Tick pim_pipeline_delay = /* pim_mode ? (5 * 4 * tCK) : */ 0;
 
     // update the packet ready time
     if (mem_pkt->isRead()) {
         mem_pkt->readyTime = cmd_at + tRL + tBURST + pim_pipeline_delay;
     } else {
         mem_pkt->readyTime = cmd_at + tWL + tBURST + pim_pipeline_delay;
+    }
+
+    if (pim_mode) {
+        DPRINTF(PIM_PIPELINE, "Arrived Instruction at tick %d, ready at %d\n",
+                cmd_at, mem_pkt->readyTime);
     }
 
     rank_ref.lastBurstTick = cmd_at;
@@ -538,13 +538,13 @@ PIMInterface::doBurstAccess(MemPacket *mem_pkt, Tick next_burst_at,
                               std::max(curTick(), bank_ref.preAllowedAt),
                               true);
             }
-            DPRINTF(PIM, "Auto-precharged all banks in rank: %d\n",
+            DPRINTF(DRAM, "Auto-precharged all banks in rank: %d\n",
                     mem_pkt->rank);
         } else {
             prechargeBank(rank_ref, bank_ref,
                           std::max(curTick(), bank_ref.preAllowedAt), true);
 
-            DPRINTF(PIM, "Auto-precharged bank: %d\n", mem_pkt->bankId);
+            DPRINTF(DRAM, "Auto-precharged bank: %d\n", mem_pkt->bankId);
         }
     }
 
@@ -605,7 +605,6 @@ PIMInterface::access(PacketPtr pkt)
     DPRINTF(PIM, "PIMInterface::access called with addr 0x%x, pim_mode=%d\n",
             pkt->getAddr(), pim_mode);
     if (pim_mode) {
-        DPRINTF(PIM, "PIM mode active, executing kernel\n");
         executeKernel(pkt);
     } else {
         Addr addr = pkt->getAddr();
@@ -749,9 +748,9 @@ PIMInterface::executeKernel(PacketPtr pkt)
         }
         if (all_bank_mode) {
             uint8_t bank = decodeBank(pkt->getAddr());
+            DPRINTF(PIM, "Executing instruction %d %s in all_bank_mode\n", pc,
+                    crf[pc]->getType());
             for (uint8_t pu = 0; pu < processing_units.size(); ++pu) {
-                DPRINTF(PIM, "Executing instruction %d %s from PU %d\n", pc,
-                        crf[pc]->getType(), pu);
                 Addr addr = modifyAddrForBank(
                     pkt->getAddr(), bank); // Modify address to target the
                                            // correct bank for this PU
@@ -829,9 +828,7 @@ PIMInterface::ControlInstruction::exec(Addr addr, PIMInterface *pim,
 
 void
 PIMInterface::ControlInstruction::rst()
-{
-    cnt = 0;
-}
+{ cnt = 0; }
 
 PIMInterface::DataInstruction::DataInstruction(
     PIMInstructionType _type, Operand _dest, uint32_t _dest_idx, Operand _src0,
@@ -894,7 +891,7 @@ PIMInterface::ALUInstruction::exec(Addr addr, PIMInterface *pim, uint8_t pu,
             assert(dest == GRF_A || dest == GRF_B);
             for (int i = 0; i < pim->getSIMDWidth(); ++i) {
                 dest_vector[i] = op0_vector[i] + op1_vector[i];
-            }   
+            }
             break;
         case MUL:
             assert(dest == GRF_A || dest == GRF_B);
