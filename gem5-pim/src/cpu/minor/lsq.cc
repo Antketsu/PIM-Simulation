@@ -1227,6 +1227,8 @@ LSQ::tryToSend(LSQRequestPtr request)
             DPRINTF(MinorMem, "Sent data memory request\n");
 
             numAccessesInMemorySystem++;
+            DPRINTF(LSQ_MINOR, "Sending from LSQ to memory at tick %d\n",
+                    curTick());
 
             request->stepToNextPacket();
 
@@ -1558,7 +1560,7 @@ LSQ::popResponse(LSQ::LSQRequestPtr response)
     // Update stats
     Tick latencyTicks = curTick() - response->pushTick;
     stats.totalLsqCycles += cpu.ticksToCycles(latencyTicks);
-    DPRINTF(LSQ_MINOR, "Instruction that entered at Tick %d exits at %d",
+    DPRINTF(LSQ_MINOR, "Instruction that entered at Tick %d exits at %d\n",
             response->pushTick, curTick());
 
     if (!response->isLoad) {
@@ -1692,7 +1694,8 @@ LSQ::pushRequest(MinorDynInstPtr inst, bool isLoad, uint8_t *data,
 
     requests.push(request);
     request->pushTick = curTick();
-    DPRINTF(LSQ_MINOR, "Instruction enterd LSQ at tick %d", request->pushTick);
+    DPRINTF(LSQ_MINOR, "Instruction enterd LSQ at tick %d\n",
+            request->pushTick);
     inst->inLSQ = true;
     request->startAddrTranslation();
     stats.totalMemInsts++;

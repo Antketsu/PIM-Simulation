@@ -1,6 +1,7 @@
 #include "mem/pim_interface.hh"
 #include "debug/DRAM.hh"
 #include "debug/PIM_PIPELINE.hh"
+#include "sim/cur_tick.hh"
 namespace gem5
 {
 
@@ -371,7 +372,7 @@ PIMInterface::doBurstAccess(MemPacket *mem_pkt, Tick next_burst_at,
 
     if (pim_mode) {
         DPRINTF(PIM_PIPELINE, "Arrived Instruction at tick %d, ready at %d\n",
-                cmd_at, mem_pkt->readyTime);
+                curTick(), mem_pkt->readyTime);
     }
 
     rank_ref.lastBurstTick = cmd_at;
