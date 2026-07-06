@@ -1694,8 +1694,6 @@ LSQ::pushRequest(MinorDynInstPtr inst, bool isLoad, uint8_t *data,
 
     requests.push(request);
     request->pushTick = curTick();
-    DPRINTF(LSQ_MINOR, "Instruction enterd LSQ at tick %d\n",
-            request->pushTick);
     inst->inLSQ = true;
     request->startAddrTranslation();
     stats.totalMemInsts++;

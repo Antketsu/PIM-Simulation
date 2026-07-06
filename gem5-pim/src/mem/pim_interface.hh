@@ -20,7 +20,7 @@ namespace memory
 
 class PIMInterface : public DRAMInterface
 {
-  private:
+  protected:
     struct PIMStats : public statistics::Group
     {
         PIMStats(PIMInterface &_pim);
@@ -37,6 +37,9 @@ class PIMInterface : public DRAMInterface
         statistics::Scalar srf_writes;
         statistics::Scalar pim_mode_switches;
         statistics::Scalar all_bank_mode_switches;
+        statistics::Scalar total_ticks_between_instrs;
+        statistics::Scalar total_gaps_between_instrs;
+        statistics::Formula avg_ticks_between_instrs;
     } pim_stats;
     enum PIMInstructionType
     {
@@ -73,9 +76,7 @@ class PIMInterface : public DRAMInterface
         std::string getType();
         virtual void
         exec(Addr addr, PIMInterface *pim, uint8_t pu, bool is_write)
-        {
-            panic("exec() not implemented for base PIMInstruction class\n");
-        }
+        { panic("exec() not implemented for base PIMInstruction class\n"); }
         virtual void
         rst()
         {}
@@ -147,7 +148,7 @@ class PIMInterface : public DRAMInterface
         std::vector<SIMD_vector> grf_a; // vector register file
         std::vector<SIMD_vector> grf_b; // vector register file
     };
-    std::vector<PIMInstruction *> crf;      // instruction register file
+    std::vector<PIMInstruction *> crf; // instruction register file
     std::vector<PIMProcessingUnit> processing_units; // processing units
     /*
      * Program counter
@@ -156,11 +157,12 @@ class PIMInterface : public DRAMInterface
     /*
      * State variables
      */
-    bool pim_mode;         // PIM mode enabled/disabled
-    bool all_bank_mode;    // all bank mode enabled/disabled
+    bool pim_mode;      // PIM mode enabled/disabled
+    bool all_bank_mode; // all bank mode enabled/disabled
 
     bool pending_to_precharge; // whether we are waiting to precharge after
                                // mode switch
+    Tick last_fetch; // last instruction fetch time
 
     /*
      * Start address of the PIM memory region
@@ -176,9 +178,11 @@ class PIMInterface : public DRAMInterface
   public:
     PIMInterface(const PIMInterfaceParams &_p);
     void access(PacketPtr pkt);
-    std::pair<Tick, Tick>
-    doBurstAccess(MemPacket *mem_pkt, Tick next_burst_at,
-                  const std::vector<MemPacketQueue> &queue) override;
+    //std::pair<Tick, Tick>
+    //issuePIM(MemPacket *mem_pkt, Tick next_burst_at);
+    std::pair<Tick, Tick> beginEndNextInstr(MemPacket *mem_pkt, Tick last_fetch);
+    std::pair<Tick, Tick> doBurstAccess(MemPacket *mem_pkt, Tick next_burst_at,
+                                      const std::vector<MemPacketQueue>& queue) override;
     void incrementPC();
     void decrementPC(uint8_t stride);
     void deactivatePIMMode();

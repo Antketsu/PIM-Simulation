@@ -50,13 +50,13 @@ def parse_stats(folder_path):
                     data['cache_accesses'] = int(val)
                 
                 # 3. Sumar Lecturas (Normal + PIM)
-                elif name in ['board.memory.mem_ctrl.dram.readBursts', 
-                              'board.pim.mem_ctrl.dram.readBursts']:
+                elif name in ['board.memory.mem_ctrl.readBursts', 
+                              'board.pim.mem_ctrl.readBursts']:
                     data['total_mem_reads'] += int(val)
                 
                 # 4. Sumar Escrituras (Normal + PIM)
-                elif name in ['board.memory.mem_ctrl.dram.writeBursts', 
-                              'board.pim.mem_ctrl.dram.writeBursts']:
+                elif name in ['board.memory.mem_ctrl.writeBursts',
+                              'board.pim.mem_ctrl.writeBursts']:
                     data['total_mem_writes'] += int(val)
                 elif name == 'board.processor.cores.core.lsq.totalMemInsts':
                     data['lsq_total_mem_insts'] = int(val)

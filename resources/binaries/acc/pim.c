@@ -39,13 +39,17 @@ int init_operand(int16_t **op){
     return 0;
 }
 
-void write_add_block(uint8_t op_idx){
-    //MOV GRF_A0, BAN0
-    crf[instr_idx++] = DATA_INST(3, 1, 3, 0, op_idx, 0);
-    //ADD GRF_B0, GRF_A0, BANK1
-    crf[instr_idx++] = ALU_INST(4, 2, 1, 4, 0, op_idx, op_idx, 0);
-    // MOV BANK0, GRF_B0
-    crf[instr_idx++] = DATA_INST(3, 3, 2, 0, 0, op_idx);
+void write_add_block(uint8_t regs){
+    for(int op_idx = 0; op_idx < regs; ++op_idx){
+        //MOV GRF_A0, BAN0
+        crf[instr_idx++] = DATA_INST(3, 1, 3, 0, op_idx, 0);
+        //ADD GRF_B0, GRF_A0, BANK1
+        crf[instr_idx++] = ALU_INST(4, 2, 1, 4, 0, op_idx, op_idx, 0);    
+    }
+    for(int op_idx = 0; op_idx < regs; ++op_idx){
+        // MOV BANK0, GRF_B0
+        crf[instr_idx++] = DATA_INST(3, 3, 2, 0, 0, op_idx);
+    }
 }
 
 void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
@@ -53,10 +57,9 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
     uint32_t elems_per_pu = elems / PUs;
     uint8_t regs = 8;
     uint16_t loops = elems_per_pu / (SIMD_WIDTH * regs);
+    uint8_t loops_per_row = 4;
     
-    for(int i = 0; i < regs; ++i){
-        write_add_block(i);
-    }
+    write_add_block(regs);
     if(loops > 1){
         crf[instr_idx++] = CTL_INST(1, 3 * regs, loops - 1);
     }
@@ -73,46 +76,20 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
 
     for(int e = 0; e < executions; ++e){
         pim_region[0] = 1; // Activate PIM mode
-        
-        //4-factor unloop
-        for(int i = 0; i < loops; i += 4){
-            
-                
-            // 0-256 bytes
-            for(int j = 0; j < regs; ++j){
-                fake_variable = *(iterA); //MOV
-                fake_variable = *(iterB); //ADD
-                *(iterC) = fake_variable; //MOV 
-                iterA += 16; iterB += 16; iterC += 16;
+        asm volatile ("dmb ish\n\t"); // Absolute hardware barrier
+        for(int i = 0; i < loops; i += loops_per_row){
+            for(int j = 0; j < loops_per_row; ++j){
+                for(int k = 0; k < regs; ++k){
+                    fake_variable = *(iterA); //MOV
+                    fake_variable = *(iterB); //ADD
+                    iterA += 16; iterB += 16;
+                }
+                for(int k = 0; k < regs; ++k){
+                    fake_variable = *(iterC); //MOV 
+                    iterC += 16;
+                }
+                fake_variable = *(iterC); //JUMP 
             }
-            fake_variable = *(iterC); //JUMP 
-
-            // 256-512 bytes
-            for(int j = 0; j < regs; ++j){
-                fake_variable = *(iterA);
-                fake_variable = *(iterB);
-                *(iterC) = fake_variable; 
-                iterA += 16; iterB += 16; iterC += 16;
-            }
-            fake_variable = *(iterC); 
-
-            // 512-768 bytes
-            for(int j = 0; j < regs; ++j){
-                fake_variable = *(iterA);
-                fake_variable = *(iterB);
-                *(iterC) = fake_variable; 
-                iterA += 16; iterB += 16; iterC += 16;
-            }
-            fake_variable = *(iterC); 
-
-            // 768-1024 bytes
-            for(int j = 0; j < regs; ++j){
-                fake_variable = *(iterA); 
-                fake_variable = *(iterB);
-                *(iterC) = fake_variable; 
-                iterA += 16; iterB += 16; iterC += 16;
-            }
-            fake_variable = *(iterC); 
 
             //End of row
             iterA = (int16_t*)((uintptr_t)iterA + BANK_ROW_INCREMENT - 1024);
@@ -124,13 +101,16 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
     m5_work_end(0, 0);
 }
 
-void write_mul_block(uint8_t op_idx){
+void write_mul_block(uint8_t regs){
     //MOV GRFB, BANK0 
-    crf[instr_idx++] = DATA_INST(3, 2, 3, 0, op_idx, 0);
-    //MAC GRFB, BANK1, SRFM
-    crf[instr_idx++] = ALU_INST(7, 2, 4, 5, 0, op_idx, 0, op_idx);
+    crf[instr_idx++] = DATA_INST(3, 2, 3, 0, 0, 0);
+
+    for(int op_idx = 0; op_idx < regs; ++op_idx){
+        //MAC GRFB, BANK1, SRFM
+        crf[instr_idx++] = ALU_INST(7, 2, 4, 5, 0, 0, 0, op_idx);
+    }
     //MOV BANK0 GRFB
-    crf[instr_idx++] = DATA_INST(3, 3, 2, 0, 0, op_idx);
+    crf[instr_idx++] = DATA_INST(3, 3, 2, 0, 0, 0);
 }
 
 int16_t* increment_iter(int16_t *iter){
@@ -148,11 +128,9 @@ int matrix_multiplication(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, u
     m5_work_begin(0, 0);
     uint16_t loops = B_cols / (SIMD_WIDTH * PUs);
     uint8_t regs = 8;
-    for(int i = 0; i < regs; ++i){
-        write_mul_block(i);
-    }
+    write_mul_block(regs);
     //JUMP 3, loops
-    crf[instr_idx++] = CTL_INST(1, 3 * regs, loops - 1);
+    crf[instr_idx++] = CTL_INST(1, regs + 2, loops - 1);
     //EXIT
     crf[instr_idx++] = CTL_INST(2, 0, 0);
 
@@ -181,23 +159,23 @@ int matrix_multiplication(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, u
             ++colA_idx;
         }
 
+        int16_t fake_variable;
+
         pim_region[0] = 1; // Activa modo PIM
 
 
         for (int colB_idx = 0; colB_idx < loops; ++colB_idx) {
             
+            asm volatile ("dmb ish\n\t"); // Barrera de hardware absoluta
+
+            fake_variable = *(C_iter); // MOV
             for(int i = 0; i < regs; ++i){
-                asm volatile (
-                    "dmb ish\n\t"          // Barrera de hardware absoluta
-                    "ldrsh wzr, [%0]\n\t"  // MOV
-                    "ldrsh wzr, [%1]\n\t"  // MAC
-                    "strh wzr, [%0]\n\t"   // MOV
-                    : 
-                    : "r" (C_iter), "r" (B_iter) 
-                    : "memory"                   
-                );
+                fake_variable = *(B_iter); // MAC
                 B_iter += 16; 
             }
+
+            fake_variable = *(C_iter); // MOV
+
             C_iter += 16;    
             (void)*B_iter;  // Trigger JUMP
 
