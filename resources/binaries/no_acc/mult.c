@@ -4,7 +4,8 @@
 #include <stdlib.h>
 
 void mult(int16_t* A, int16_t* B, int16_t* C, uint32_t rows_A, uint32_t cols_A, uint32_t cols_B){
-    m5_work_begin(0, 0);
+    printf("Starting multiplication...\n");
+    //m5_work_begin(0, 0);
     for(int i = 0; i < rows_A; ++i){
         for (int j = 0; j < cols_B; j++) {
             int32_t sum = 0; // Usamos un acumulador temporal local limpia
@@ -16,7 +17,7 @@ void mult(int16_t* A, int16_t* B, int16_t* C, uint32_t rows_A, uint32_t cols_A, 
             C[i * cols_B + j] = (int16_t)sum;
         }
     }
-    m5_work_end(0, 0);
+    //m5_work_end(0, 0);
 }
 
 void init_matrix(int16_t* A, int16_t* B, uint32_t rows_A, uint32_t rows_B, uint32_t cols_B){
@@ -49,6 +50,8 @@ int main(int argc, char *argv[]) {
     uint32_t rows_A = atoi(argv[1]);
     uint32_t rows_B = atoi(argv[2]);
     uint32_t cols_B = atoi(argv[3]);
+
+    printf("Allocating...\n");
     
     int16_t *A = (int16_t *)aligned_alloc(16, rows_A * rows_B * sizeof(int16_t));
     int16_t *B = (int16_t *)aligned_alloc(16, rows_B * cols_B * sizeof(int16_t));

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 int16_t* fill_matrix(int16_t* A, int16_t *B, uint64_t  elems){
+    printf("Filling matrix with %lu elements\n", elems);
     int16_t *iter = A;
     for(int i = 0; i < elems;){
         for(int b = 0; b < 8; ++b){
@@ -18,6 +19,7 @@ int16_t* fill_matrix(int16_t* A, int16_t *B, uint64_t  elems){
         }
         iter = increment_iter(iter);
     }
+    printf("Matrix filled up to address: %p\n", (void *)iter);
     return iter;
 }
 
@@ -74,7 +76,6 @@ int main(int argc, char *argv[]) {
     int16_t *A, *B, *C;
     init_operand(&A);
     B = (uintptr_t)A + (1 << 10);
-    m5_exit(0);
     C = fill_matrix(A, B, elems);
     add(A, B, C, elems);    
     print(C, rows, cols);

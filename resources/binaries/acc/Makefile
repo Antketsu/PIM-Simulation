@@ -1,6 +1,6 @@
 GEM5_PATH = /home/antonio/U/laburo/PIM-Simulation/gem5-pim
-ISA = arm64
-CC = aarch64-linux-gnu-gcc
+ISA = x86
+CC = gcc
 
 
 PIM_DIR = ..

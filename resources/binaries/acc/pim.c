@@ -1,5 +1,12 @@
 #include "pim.h"
 #include <stdatomic.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <fcntl.h>
+
+
 uint8_t *pim_region;
 uint32_t *crf;
 int16_t *pu_space;
@@ -21,20 +28,24 @@ uint64_t next_addr = 0x20000000;
 #define PUs 8
 
 int init_operand(int16_t **op){ 
-    uint32_t ptr = next_addr;
 
-    *op = mmap(
-                (void *)ptr,  
-                0xFFFFFFF,
-                PROT_READ | PROT_WRITE,
-                MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED,
-                -1,
-                0
-            );
-    if (*op == MAP_FAILED) {
-        perror("Mapping error \n");
+    int fd = open("/dev/mem", O_RDWR | O_SYNC);
+    if (fd < 0) {
+        perror("open /dev/mem");
         return 1;
     }
+
+    void *ptr = mmap(0x700000000000, 0xFFFFFFF, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0x280004000);
+
+
+    if (ptr == MAP_FAILED) {
+        perror("mmap");
+        return -1;
+    }
+
+    *op = (int16_t *)ptr;
+
+    printf("Allocated operand at virtual address: %p\n", (void *)*op);
 
     return 0;
 }
@@ -53,7 +64,6 @@ void write_add_block(uint8_t regs){
 }
 
 void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
-    m5_work_begin(0,0);
     uint32_t elems_per_pu = elems / PUs;
     uint8_t regs = 8;
     uint16_t loops = elems_per_pu / (SIMD_WIDTH * regs);
@@ -76,7 +86,7 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
 
     for(int e = 0; e < executions; ++e){
         pim_region[0] = 1; // Activate PIM mode
-        asm volatile ("dmb ish\n\t"); // Absolute hardware barrier
+        asm volatile ("mfence\n\t"); // Absolute hardware barrier
         for(int i = 0; i < loops; i += loops_per_row){
             for(int j = 0; j < loops_per_row; ++j){
                 for(int k = 0; k < regs; ++k){
@@ -98,7 +108,6 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
         }
         fake_variable = *(iterC); //EXIT
     }
-    m5_work_end(0, 0);
 }
 
 void write_mul_block(uint8_t regs){
@@ -166,7 +175,7 @@ int matrix_multiplication(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, u
 
         for (int colB_idx = 0; colB_idx < loops; ++colB_idx) {
             
-            asm volatile ("dmb ish\n\t"); // Barrera de hardware absoluta
+            asm volatile ("mfence\n\t"); // Barrera de hardware absoluta
 
             fake_variable = *(C_iter); // MOV
             for(int i = 0; i < regs; ++i){
@@ -195,19 +204,22 @@ int matrix_multiplication(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, u
 }
 
 int init_pim(){
-    pim_region = mmap(
-        (void *)0x10000000,  
-        pim_size,
-        PROT_READ | PROT_WRITE,
-        MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED,
-        -1,
-        0
-    );
-
-    if (pim_region == MAP_FAILED) {
-        perror("Error al mapear la región PIM");
+    off_t target_paddr = 0x280000000;
+    size_t size = 4096;
+    int fd = open("/dev/mem", O_RDWR | O_SYNC);
+    if (fd < 0) {
+        perror("open /dev/mem");
         return 1;
     }
+
+    void *base = mmap(NULL, size, PROT_READ | PROT_WRITE,
+                       MAP_SHARED, fd, target_paddr);
+    if (base == MAP_FAILED) {
+        perror("mmap");
+        close(fd);
+        return 1;
+    }
+    pim_region = (uint8_t *)base;
     crf = (uint32_t *)(pim_region + 8); 
     pu_space = (int16_t *)(crf + 32);
     return 0;

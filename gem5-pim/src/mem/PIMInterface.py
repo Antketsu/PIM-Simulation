@@ -21,7 +21,7 @@ class PIMInterface(DRAMInterface):
     )
     # By default 4GB
     pim_range_start = Param.Addr(
-        0xC4000000, "Starting address of the PIM register address range"
+        0x280000000, "Starting address of the PIM register address range"
     )
 
     # 64-bit interface for a single pseudo channel
