@@ -7,46 +7,23 @@
 #include <fcntl.h>
 
 
+
+#define PIM_SIZE 0xC0000000 // 3GB
+#define ROW_INCREMENT 0x00002000
+#define SRF_ENTRIES 16
+#define GRF_ENTRIES 16
+#define SIMD_WIDTH 16
+#define PU_SIZE (SRF_ENTRIES + GRF_ENTRIES * SIMD_WIDTH)// How many elements of 16 bits
+#define PUs 8
+
+int fd; // File descriptor for /dev/pim
 uint8_t *pim_region;
 uint32_t *crf;
 int16_t *pu_space;
 uint8_t instr_idx = 0;
 
-size_t pim_size = 0x1000000;  // 16 MB
-
-uint64_t next_addr = 0x20000000;
-
-
-#define ROW_INCREMENT 0x00002000
-
-#define SRF_ETNRIES 16
-
-#define GRF_ENTRIES 16
-
-#define PU_SIZE (SRF_ETNRIES + GRF_ENTRIES * 16)// How many elements of 16 bits
-
-#define PUs 8
-
 int init_operand(int16_t **op){ 
-
-    int fd = open("/dev/mem", O_RDWR | O_SYNC);
-    if (fd < 0) {
-        perror("open /dev/mem");
-        return 1;
-    }
-
-    void *ptr = mmap(0x700000000000, 0xFFFFFFF, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0x280004000);
-
-
-    if (ptr == MAP_FAILED) {
-        perror("mmap");
-        return -1;
-    }
-
-    *op = (int16_t *)ptr;
-
-    printf("Allocated operand at virtual address: %p\n", (void *)*op);
-
+    *op = (int16_t * )(pim_region + 0x4000); // Offset to the operand region 
     return 0;
 }
 
@@ -68,6 +45,9 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
     uint8_t regs = 8;
     uint16_t loops = elems_per_pu / (SIMD_WIDTH * regs);
     uint8_t loops_per_row = 4;
+    uint8_t executions = loops / 256;
+    executions += (loops % 256) ? 1 : 0;
+    loops = (loops > 256) ? 256 : loops;
     
     write_add_block(regs);
     if(loops > 1){
@@ -78,9 +58,7 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
     *(uint8_t *)(pim_region + 4) = 1; 
     
     int16_t fake_variable; 
-    uint8_t executions = loops / 256;
-    executions += (loops % 256) ? 1 : 0;
-    loops = (loops > 256) ? 256 : loops;
+    
 
     volatile int16_t *iterA = (volatile int16_t * volatile)A, *iterB = (volatile int16_t * volatile)B, *iterC = (volatile int16_t * volatile)C;
 
@@ -204,16 +182,14 @@ int matrix_multiplication(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, u
 }
 
 int init_pim(){
-    off_t target_paddr = 0x280000000;
-    size_t size = 4096;
-    int fd = open("/dev/mem", O_RDWR | O_SYNC);
+    fd = open("/dev/pim", O_RDWR);
     if (fd < 0) {
-        perror("open /dev/mem");
+        perror("open /dev/pim");
         return 1;
     }
 
-    void *base = mmap(NULL, size, PROT_READ | PROT_WRITE,
-                       MAP_SHARED, fd, target_paddr);
+    void *base = mmap((void *)0x700000000000, PIM_SIZE, PROT_READ | PROT_WRITE,
+                       MAP_SHARED | MAP_FIXED, fd, 0);
     if (base == MAP_FAILED) {
         perror("mmap");
         close(fd);
@@ -222,5 +198,17 @@ int init_pim(){
     pim_region = (uint8_t *)base;
     crf = (uint32_t *)(pim_region + 8); 
     pu_space = (int16_t *)(crf + 32);
+    return 0;
+}
+
+int close_pim(){
+    if (munmap(pim_region, PIM_SIZE) == -1) {
+        perror("munmap");
+        return 1;
+    }
+    if (close(fd) == -1) {
+        perror("close");
+        return 1;
+    }
     return 0;
 }

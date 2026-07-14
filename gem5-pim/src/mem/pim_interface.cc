@@ -182,8 +182,8 @@ PIMInterface::format_instruction(uint32_t raw_instr)
         (PIMInstructionType)((raw_instr & ~0x0FFFFFFF) >> 28);
     if (type == NOP || type == JUMP || type == EXIT) { // Control
         // IMM0: [18:11] IMMU1: [10:0]
-        int8_t imm0 = (raw_instr & ~0xFFF807FF) >> 11;
-        int8_t imm1 = (raw_instr & ~0xFFFFF800);
+        uint8_t imm0 = (raw_instr & ~0xFFF807FF) >> 11;
+        uint8_t imm1 = (raw_instr & ~0xFFFFF800);
         DPRINTF(PIM,
                 "Formatted control instruction type %d "
                 "imm0 %d imm1 %d\n",

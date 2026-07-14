@@ -21,25 +21,7 @@ from gem5.components.processors.simple_processor import SimpleProcessor
 from gem5.components.processors.simple_switchable_processor import SimpleSwitchableProcessor
 from gem5.resources.resource import BinaryResource  
 from gem5.components.memory.pim import PIMAccelerator
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--rows", type=int, help="number of rows")
-    parser.add_argument("--cols", type=int, help="number of columns")
-    args = parser.parse_args()
-    return args
-
-
-def exit_handler():
-    process = processor.get_cores()[0].core.workload[0]
-    # VA, PA, Size, Cacheable
-    process.map(0x10000000, 0xC4000000, 0x1000000, False) # PIM region
-    print("Mapped memory region at VA 0x10000000 to PA 0xC4000000")
-
-    process.map(0x20000000, 0xD0000000, 0xFFFFFFF, False)
-
-    yield False
-    yield True
+import m5
 
 
 cache_hierarchy = PrivateL1SharedL2CacheHierarchy(
@@ -55,6 +37,7 @@ cache_hierarchy = PrivateL1SharedL2CacheHierarchy(
 memory = SingleChannelDDR4_2400(size="3GB")
 
 
+
 processor = SimpleSwitchableProcessor(
 	starting_core_type=CPUTypes.KVM,
 	switch_core_type=CPUTypes.TIMING,
@@ -63,7 +46,14 @@ processor = SimpleSwitchableProcessor(
 
 for proc in processor.start:
   proc.core.usePerf = False
+'''
 
+processor = SimpleProcessor(
+    cpu_type=CPUTypes.TIMING,
+    isa=ISA.X86,
+    num_cores=1
+)
+'''
 pim = PIMAccelerator(size="3GB")
 
 board = PIMBoard(
@@ -74,10 +64,9 @@ board = PIMBoard(
     pim=pim
 )
 
-args = parse_args()
-
 command = (
-     "/bin/sh;"
+     #"/bin/sh;"
+     "m5 exit;/home/gem5/mult 1024 1024 1024;"
 )
 
 def exit_event_handler():
@@ -90,7 +79,7 @@ def exit_event_handler():
 
 board.set_kernel_disk_workload(
     #kernel=obtain_resource(resource_id="x86-linux-kernel-5.15.180"),
-    kernel = DiskImageResource("/home/antonio/U/drivers_course/linux/vmlinux"),
+    kernel = DiskImageResource("/home/antonio/U/laburo/gem5-resources/src/ubuntu-generic-diskimages/x86-disk-image-24-04/vmlinux-x86-ubuntu"),
     disk_image=DiskImageResource("/home/antonio/U/laburo/gem5-resources/src/ubuntu-generic-diskimages/x86-disk-image-24-04/x86-ubuntu"),
     readfile_contents=command,
     kernel_args=[
@@ -103,13 +92,11 @@ board.set_kernel_disk_workload(
     ]
 )
 
-
-
 simulator = Simulator(
         board=board,
-        on_exit_event= {
-            ExitEvent.EXIT: exit_event_handler(),
-            }
+        on_exit_event={
+            ExitEvent.EXIT: exit_event_handler()
+        }
     )
 
     
