@@ -182,8 +182,8 @@ PIMInterface::format_instruction(uint32_t raw_instr)
         (PIMInstructionType)((raw_instr & ~0x0FFFFFFF) >> 28);
     if (type == NOP || type == JUMP || type == EXIT) { // Control
         // IMM0: [18:11] IMMU1: [10:0]
-        int8_t imm0 = (raw_instr & ~0xFFF807FF) >> 11;
-        int8_t imm1 = (raw_instr & ~0xFFFFF800);
+        uint8_t imm0 = (raw_instr & ~0xFFF807FF) >> 11;
+        uint8_t imm1 = (raw_instr & ~0xFFFFF800);
         DPRINTF(PIM,
                 "Formatted control instruction type %d "
                 "imm0 %d imm1 %d\n",
@@ -349,8 +349,8 @@ void
 PIMInterface::access(PacketPtr pkt)
 {
     bool response_done = false;
-    DPRINTF(PIM, "PIMInterface::access called with addr 0x%x, pim_mode=%d\n",
-            pkt->getAddr(), pim_mode);
+    //DPRINTF(PIM, "PIMInterface::access called with addr 0x%x, pim_mode=%d\n",
+    //        pkt->getAddr(), pim_mode);
     if (pim_mode) {
         executeKernel(pkt);
     } else {
@@ -495,8 +495,8 @@ PIMInterface::executeKernel(PacketPtr pkt)
         }
         if (all_bank_mode) {
             uint8_t bank = decodeBank(pkt->getAddr());
-            DPRINTF(PIM, "Executing instruction %d %s in all_bank_mode\n", pc,
-                    crf[pc]->getType());
+            DPRINTF(PIM, "Executing instruction %d %s in all_bank_mode with address %#x\n", pc,
+                    crf[pc]->getType(), pkt->getAddr());
             for (uint8_t pu = 0; pu < processing_units.size(); ++pu) {
                 Addr addr = modifyAddrForBank(
                     pkt->getAddr(), bank); // Modify address to target the

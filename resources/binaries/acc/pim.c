@@ -58,6 +58,9 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
     uint8_t regs = 8;
     uint16_t loops = elems_per_pu / (SIMD_WIDTH * regs);
     uint8_t loops_per_row = 4;
+    uint8_t executions = loops / 256;
+    executions += (loops % 256) ? 1 : 0;
+    loops = (loops > 256) ? 256 : loops;
     
     write_add_block(regs);
     if(loops > 1){
@@ -68,9 +71,7 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
     *(uint8_t *)(pim_region + 4) = 1; 
     
     int16_t fake_variable; 
-    uint8_t executions = loops / 256;
-    executions += (loops % 256) ? 1 : 0;
-    loops = (loops > 256) ? 256 : loops;
+    
 
     volatile int16_t *iterA = (volatile int16_t * volatile)A, *iterB = (volatile int16_t * volatile)B, *iterC = (volatile int16_t * volatile)C;
 
