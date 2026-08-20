@@ -6,17 +6,20 @@
 int16_t* fill_matrix(int16_t* A, int16_t *B, uint64_t  elems){
     int16_t *iter = A;
     for(int i = 0; i < elems;){
-        for(int b = 0; b < 8; ++b){
-            int16_t *bank_ptrA = (int16_t*)(((uintptr_t)iter & ~(0xFULL << 10)) | ((2 * b) << 10));
-            int16_t *bank_ptrB = (int16_t*)(((uintptr_t)iter & ~(0xFULL << 10)) | ((2 * b + 1) << 10));
-
-            for(int k = 0; k < 16; ++k){
-                bank_ptrA[k] = i;
-                bank_ptrB[k] = i;
-                ++i;
+        for(int r = 0; r < 32; ++r){
+            for(int b = 0; b < 8; ++b){
+                int16_t *bank_ptrA = (int16_t*)(((uintptr_t)iter & ~(0xFULL << 10)) | ((2 * b) << 10));
+                int16_t *bank_ptrB = (int16_t*)(((uintptr_t)iter & ~(0xFULL << 10)) | ((2 * b + 1) << 10));
+    
+                for(int k = 0; k < 16; ++k){
+                    bank_ptrA[k] = i;
+                    bank_ptrB[k] = i;
+                    ++i;
+                }
             }
+            iter += 16;
         }
-        iter = increment_iter(iter);
+        iter = iter + (1 << 14) - 1024;
     }
     return iter;
 }

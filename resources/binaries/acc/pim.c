@@ -63,9 +63,7 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
     loops = (loops > 256) ? 256 : loops;
     
     write_add_block(regs);
-    if(loops > 1){
-        crf[instr_idx++] = CTL_INST(1, 3 * regs, loops - 1);
-    }
+    crf[instr_idx++] = CTL_INST(1, 3 * regs, loops - 1);
     crf[instr_idx++] = CTL_INST(2, 0 , 0);     
     
     *(uint8_t *)(pim_region + 4) = 1; 

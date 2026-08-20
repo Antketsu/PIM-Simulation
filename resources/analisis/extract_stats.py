@@ -14,9 +14,20 @@ def parse_stats(folder_path):
     data = {
         'folder': os.path.basename(folder_path),
         'sim_seconds': 0.0,
-        'cache_accesses': 0,
+        'l1d_cache_accesses': 0,
+        'l1i_cache_accesses': 0,
+        'l2_cache_accesses': 0,
         'total_mem_reads': 0,
-        'total_mem_writes': 0
+        'total_mem_writes': 0,
+        'pim_conf_accesses': 0,
+        'mem_dram_read_hits': 0,
+        'mem_dram_read_misses': 0,
+        'mem_dram_write_hits': 0,
+        'mem_dram_write_misses': 0,
+        'pim_dram_read_hits': 0,
+        'pim_dram_read_misses': 0,
+        'pim_dram_write_hits': 0,
+        'pim_dram_write_misses': 0,
     }
     
     with open(stats_file, 'r') as f:
@@ -41,23 +52,44 @@ def parse_stats(folder_path):
                 except ValueError:
                     continue
 
-                # 1. Segundos de simulación
                 if name == 'simSeconds':
-                    data['sim_seconds'] = val
-                
-                # 2. Accesos a Cache L1D total
+                    data['sim_seconds'] = val * 1000 #ms
+
                 elif name == 'board.cache_hierarchy.l1dcaches.overallAccesses::total':
-                    data['cache_accesses'] = int(val)
-                
-                # 3. Sumar Lecturas (Normal + PIM)
-                elif name in ['board.memory.mem_ctrl.readBursts', 
+                    data['l1d_cache_accesses'] = int(val)
+                elif name == 'board.cache_hierarchy.l1icaches.overallAccesses::total':
+                    data['l1i_cache_accesses'] = int(val)
+                elif name == 'board.cache_hierarchy.l2cache.overallAccesses::total':
+                    data['l2_cache_accesses'] = int(val)
+
+                elif name in ['board.memory.mem_ctrl.readBursts',
                               'board.pim.mem_ctrl.readBursts']:
                     data['total_mem_reads'] += int(val)
-                
-                # 4. Sumar Escrituras (Normal + PIM)
                 elif name in ['board.memory.mem_ctrl.writeBursts',
                               'board.pim.mem_ctrl.writeBursts']:
                     data['total_mem_writes'] += int(val)
+
+                elif name == 'board.pim.mem_ctrl.dram.pim_conf_accesses':
+                    data['pim_conf_accesses'] = int(val)
+
+                elif name == 'board.memory.mem_ctrl.dram.read_hits':
+                    data['mem_dram_read_hits'] = int(val)
+                elif name == 'board.memory.mem_ctrl.dram.read_misses':
+                    data['mem_dram_read_misses'] = int(val)
+                elif name == 'board.memory.mem_ctrl.dram.write_hits':
+                    data['mem_dram_write_hits'] = int(val)
+                elif name == 'board.memory.mem_ctrl.dram.write_misses':
+                    data['mem_dram_write_misses'] = int(val)
+
+                elif name == 'board.pim.mem_ctrl.dram.read_hits':
+                    data['pim_dram_read_hits'] = int(val)
+                elif name == 'board.pim.mem_ctrl.dram.read_misses':
+                    data['pim_dram_read_misses'] = int(val)
+                elif name == 'board.pim.mem_ctrl.dram.write_hits':
+                    data['pim_dram_write_hits'] = int(val)
+                elif name == 'board.pim.mem_ctrl.dram.write_misses':
+                    data['pim_dram_write_misses'] = int(val)
+
                 elif name == 'board.processor.cores.core.lsq.totalMemInsts':
                     data['lsq_total_mem_insts'] = int(val)
                 elif name == 'board.processor.cores.core.lsq.totalLsqCycles':
@@ -66,7 +98,7 @@ def parse_stats(folder_path):
                     data['lsq_avg_cycles'] = float(val)
 
     # Calculamos la columna final de accesos a memoria
-    data['mem_total_accesses'] = data['total_mem_reads'] + data['total_mem_writes']
+    data['mem_total_accesses'] = data['total_mem_reads'] + data['total_mem_writes'] - data['pim_conf_accesses']
     return data
 
 
@@ -120,8 +152,13 @@ def main():
     df = pd.DataFrame(resultados)
     
     # Seleccionar y reordenar columnas finales (añadí las nuevas por si te sirven)
-    cols = ['folder', 'kernel_type', 'execution_mode', 'matrix_size', 
-            'sim_seconds', 'cache_accesses', 'mem_total_accesses', 
+    cols = ['folder', 'kernel_type', 'execution_mode', 'matrix_size',
+            'sim_seconds', 'l1d_cache_accesses', 'l1i_cache_accesses', 'l2_cache_accesses',
+            'mem_total_accesses', 'pim_conf_accesses',
+            'mem_dram_read_hits', 'mem_dram_read_misses',
+            'mem_dram_write_hits', 'mem_dram_write_misses',
+            'pim_dram_read_hits', 'pim_dram_read_misses',
+            'pim_dram_write_hits', 'pim_dram_write_misses',
             'lsq_total_mem_insts', 'lsq_total_cycles', 'lsq_avg_cycles']
     
     # Filtrar solo por las columnas que realmente existan en el df para evitar KeyErrors

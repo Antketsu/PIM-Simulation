@@ -1,4 +1,3 @@
 {
-    "C_Cpp.default.compilerPath": "/usr/bin/aarch64-linux-gnu-gcc",
-    "cmake.sourceDirectory": "/home/antonio/U/laburo/PIM-Simulation/DRAMPower"
+    "cmake.ignoreCMakeListsMissing": true
 }

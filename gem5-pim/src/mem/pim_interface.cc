@@ -26,7 +26,8 @@ PIMInterface::PIMProcessingUnit::PIMProcessingUnit(uint8_t srf_entries,
 {}
 
 PIMInterface::PIMInterface(const PIMInterfaceParams &_p)
-    : DRAMInterface(_p),
+: DRAMInterface(_p),
+      pim_stats(*this),
       crf_entries(_p.crf_entries),
       grf_entries(_p.grf_entries),
       srf_entries(_p.srf_entries),
@@ -38,10 +39,15 @@ PIMInterface::PIMInterface(const PIMInterfaceParams &_p)
       pc(0),
       pim_mode(false),
       all_bank_mode(false),
-      pim_range_start(_p.pim_range_start),
-      pim_stats(*this)
-
-{
+      pim_range_start(_p.pim_range_start)
+{   
+    size_t srf_size = srf_entries * 2; // 16 bits per scalar register
+    size_t grf_size =
+        grf_entries * simd_width * 2; // 16 bits per vector register entry
+    crf_range = AddrRange(pim_range_start + 8, pim_range_start + 8 + crf_entries * 4);
+    pu_range = AddrRange(
+          crf_range.end(),
+          crf_range.end() + processing_units.size() * (srf_size + grf_size));
     DPRINTF(PIM,
             "Initialized PIMInterface with CRF entries %d, GRF entries %d, "
             "SRF entries %d, SIMD width %d, PIM range start %#x\n",
@@ -80,7 +86,8 @@ PIMInterface::PIMStats::PIMStats(PIMInterface &_pim)
       total_gaps_between_instrs(this, "total_gaps_between_instrs",
                                  "Total gaps between instructions"),
       avg_ticks_between_instrs(this, "avg_ticks_between_instrs",
-                                "Average ticks between instructions")
+                                "Average ticks between instructions"),
+      pim_conf_accesses(this, "pim_conf_accesses", "Number of PIM configuration accesses")
     
 {avg_ticks_between_instrs = total_ticks_between_instrs / total_gaps_between_instrs;}
 
@@ -288,17 +295,28 @@ std::pair<Tick, Tick>
 PIMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
                              const std::vector<MemPacketQueue>& queue)
 {
+    DPRINTF(PIM, "doBurstAccess called with addr 0x%x, pim_mode=%d\n",
+            mem_pkt->getAddr(), pim_mode);
     if(pim_mode){
-        if(mem_pkt->isRead()){
+        if(crf[pc]->is_read()){
             stats.readBursts++;
         }
-        else{
+        else if(crf[pc]->is_write()){
             stats.writeBursts++;
+        }
+        else{
+            assert(crf[pc]->getType() == "JUMP" || crf[pc]->getType() == "EXIT" || crf[pc]->getType() == "NOP");
         }
         Rank &rank_ref = *ranks[0];
         Bank &bank_ref = rank_ref.banks[mem_pkt->bank];
-        Tick col_allowed_at = next_burst_at;
+        Tick fetch_allowed_at = std::max(next_burst_at, curTick());
         if (pending_to_precharge || bank_ref.openRow != mem_pkt->row) {
+            if(crf[pc]->is_read()){
+                stats.read_misses++;
+            }
+            else if(crf[pc]->is_write()){
+                stats.write_misses++;
+            }
             DPRINTF(PIM,
                     "Changing mode or in PIM mode with row conflict, current "
                     "row: %d, accessed row: %d\n",
@@ -315,27 +333,36 @@ PIMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
                 activateBank(rank_ref, bank_ref,
                                 std::max(bank_ref.actAllowedAt, curTick()),
                                 mem_pkt->row);
-                col_allowed_at = std::max(
-                    col_allowed_at, mem_pkt->isRead() ? bank_ref.rdAllowedAt
-                                                        : bank_ref.wrAllowedAt);
+                fetch_allowed_at = std::max(
+                    fetch_allowed_at, crf[pc]->is_read() ? bank_ref.rdAllowedAt - 4 * tCK
+                                                         : bank_ref.wrAllowedAt -
+                                                           4 * tCK);
+            }
+        }
+        else{
+            if(crf[pc]->is_read()){
+                stats.read_hits++;
+            }
+            else if(crf[pc]->is_write()){
+                stats.write_hits++;
             }
         }
         //Tick pim_allowed_at = std::max(col_allowed_at, last_fetch + 4 * tCK);
         //col_allowed_at = std::max(col_allowed_at, next_burst_at);
         bool is_exit = (crf[pc]->getType() == "EXIT");
-        Tick next_instr = col_allowed_at + (is_exit ? 4 * 5 * tCK : 4 * tCK);
+        Tick next_instr = fetch_allowed_at + (is_exit ? 4 * 5 * tCK : 4 * tCK);
         mem_pkt->readyTime = curTick();
         DPRINTF(PIM_PIPELINE, "Instruction with addr 0x%x starts at %d, next at %d\n",
-                mem_pkt->getAddr(), col_allowed_at, next_instr);
+                mem_pkt->getAddr(), fetch_allowed_at, next_instr);
         
         if(mem_pkt->isRead()){
             ++rank_ref.outstandingEvents;
         }
         if(!pending_to_precharge){
             ++pim_stats.total_gaps_between_instrs;
-            pim_stats.total_ticks_between_instrs += (col_allowed_at - last_fetch);
+            pim_stats.total_ticks_between_instrs += (fetch_allowed_at - last_fetch);
         }
-        last_fetch = col_allowed_at;
+        last_fetch = fetch_allowed_at;
         pending_to_precharge = false;
         return std::make_pair(curTick(), next_instr);
     }
@@ -343,6 +370,13 @@ PIMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
         return DRAMInterface::doBurstAccess(mem_pkt, next_burst_at, queue);
     }
 
+}
+
+bool
+PIMInterface::isPIMAddr(Addr addr)
+{
+    return addr == pim_range_start || addr == pim_range_start + 4 ||
+           crf_range.contains(addr) || pu_range.contains(addr);
 }
 
 void
@@ -355,15 +389,10 @@ PIMInterface::access(PacketPtr pkt)
         executeKernel(pkt);
     } else {
         Addr addr = pkt->getAddr();
-        // skip pim and single bank registers, 32 bits per CRF entry,
-        AddrRange crf_range = AddrRange(pim_range_start + 8,
-                                        pim_range_start + 8 + crf_entries * 4);
+        // skip pim and single bank registers, 32 bits per CRF entry, 
         size_t srf_size = srf_entries * 2; // 16 bits per scalar register
         size_t grf_size =
             grf_entries * simd_width * 2; // 16 bits per vector register entry
-        AddrRange pu_range = AddrRange(
-            crf_range.end(),
-            crf_range.end() + processing_units.size() * (srf_size + grf_size));
         if (addr == pim_range_start) {
             // Access PIM mode register
             pim_mode = true;
@@ -376,11 +405,13 @@ PIMInterface::access(PacketPtr pkt)
                 i->rst();
             }
             pim_stats.pim_mode_switches++;
+            pim_stats.pim_conf_accesses++;
             DPRINTF(PIM, "Entering PIM mode\n");
         } else if (addr == pim_range_start + 4) {
             // Access all bank mode register
             all_bank_mode = !all_bank_mode;
             pim_stats.all_bank_mode_switches++;
+            pim_stats.pim_conf_accesses++;
             DPRINTF(PIM, "Setting all bank mode to %d\n", all_bank_mode);
         } else if (crf_range.contains(addr)) {
             // Access CRF
@@ -394,7 +425,9 @@ PIMInterface::access(PacketPtr pkt)
             } else {
                 pim_stats.crf_reads++;
             }
+            pim_stats.pim_conf_accesses++;
         } else if (pu_range.contains(addr)) {
+            pim_stats.pim_conf_accesses++;
             // Get PU index
             uint8_t pu_idx = (addr - crf_range.end()) / (srf_size + grf_size);
             if (pu_idx >= processing_units.size()) {
@@ -573,6 +606,7 @@ PIMInterface::ControlInstruction::exec(Addr addr, PIMInterface *pim,
     }
 }
 
+
 void
 PIMInterface::ControlInstruction::rst()
 { cnt = 0; }
@@ -606,6 +640,16 @@ PIMInterface::DataInstruction::exec(Addr addr, PIMInterface *pim, uint8_t pu,
         default:
             panic("Unknown data instruction type %d\n", type);
     }
+}
+
+bool
+PIMInterface::DataInstruction::is_read(){
+    return src0 == ODD_BANK || src0 == EVEN_BANK;
+}
+
+bool
+PIMInterface::DataInstruction::is_write(){
+    return dest == ODD_BANK || dest == EVEN_BANK;
 }
 
 PIMInterface::ALUInstruction::ALUInstruction(PIMInstructionType _type,
@@ -662,6 +706,16 @@ PIMInterface::ALUInstruction::exec(Addr addr, PIMInterface *pim, uint8_t pu,
         default:
             panic("Unknown ALU instruction type %d\n", type);
     }
+}
+
+bool
+PIMInterface::ALUInstruction::is_read(){
+    return src0 == ODD_BANK || src0 == EVEN_BANK || src1 == ODD_BANK || src1 == EVEN_BANK;
+}
+
+bool
+PIMInterface::ALUInstruction::is_write(){
+    return dest == ODD_BANK || dest == EVEN_BANK;
 }
 
 } // namespace memory

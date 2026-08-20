@@ -177,6 +177,7 @@ DRAMInterface::activateBank(Rank& rank_ref, Bank& bank_ref,
 {
     assert(rank_ref.actTicks.size() == activationLimit);
 
+
     // verify that we have command bandwidth to issue the activate
     // if not, shift to next burst window
     Tick act_at;
@@ -287,6 +288,7 @@ DRAMInterface::prechargeBank(Rank& rank_ref, Bank& bank, Tick pre_tick,
     // make sure the bank has an open row
     assert(bank.openRow != Bank::NO_ROW);
 
+
     // sample the bytes per activate here since we are closing
     // the page
     stats.bytesPerActivate.sample(bank.bytesAccessed);
@@ -371,10 +373,20 @@ DRAMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
 
     // Determine the access latency and update the bank state
     if (bank_ref.openRow == mem_pkt->row) {
-        // nothing to do
+        if(mem_pkt->isRead()){
+            ++stats.read_hits;
+        }
+        else{
+            ++stats.write_hits;
+        }
     } else {
         row_hit = false;
-
+        if(mem_pkt->isRead()){
+            ++stats.read_misses;
+        }
+        else{
+            ++stats.write_misses;
+        }
         // If there is a page open, precharge it.
         if (bank_ref.openRow != Bank::NO_ROW) {
             prechargeBank(rank_ref, bank_ref, std::max(bank_ref.preAllowedAt,
@@ -1850,7 +1862,6 @@ DRAMInterface::DRAMStats::DRAMStats(DRAMInterface &_dram)
              "Number of DRAM read bursts"),
     ADD_STAT(writeBursts, statistics::units::Count::get(),
              "Number of DRAM write bursts"),
-
     ADD_STAT(perBankRdBursts, statistics::units::Count::get(),
              "Per bank write bursts"),
     ADD_STAT(perBankWrBursts, statistics::units::Count::get(),
@@ -1908,7 +1919,15 @@ DRAMInterface::DRAMStats::DRAMStats(DRAMInterface &_dram)
              "Data bus utilization in percentage for writes"),
 
     ADD_STAT(pageHitRate, statistics::units::Ratio::get(),
-             "Row buffer hit rate, read and write combined")
+             "Row buffer hit rate, read and write combined"),
+    ADD_STAT(read_hits, statistics::units::Count::get(),
+             "Number of read hits"),
+    ADD_STAT(write_hits, statistics::units::Count::get(),
+             "Number of write hits"),
+    ADD_STAT(read_misses, statistics::units::Count::get(),
+             "Number of read misses"),
+    ADD_STAT(write_misses, statistics::units::Count::get(),
+             "Number of write misses")
 
 {
 }

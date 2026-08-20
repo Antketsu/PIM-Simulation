@@ -40,6 +40,7 @@ class PIMInterface : public DRAMInterface
         statistics::Scalar total_ticks_between_instrs;
         statistics::Scalar total_gaps_between_instrs;
         statistics::Formula avg_ticks_between_instrs;
+        statistics::Scalar pim_conf_accesses;
     } pim_stats;
     enum PIMInstructionType
     {
@@ -80,6 +81,12 @@ class PIMInterface : public DRAMInterface
         virtual void
         rst()
         {}
+        virtual bool is_read(){
+          return false;          
+        }
+        virtual bool is_write(){
+          return false;
+        }
     };
 
     class ControlInstruction : public PIMInstruction
@@ -108,6 +115,8 @@ class PIMInterface : public DRAMInterface
                         bool _do_relu);
         void exec(Addr addr, PIMInterface *pim, uint8_t pu,
                   bool is_write) override;
+        bool is_read() override;
+        bool is_write() override;
     };
 
     class ALUInstruction : public PIMInstruction
@@ -122,6 +131,8 @@ class PIMInterface : public DRAMInterface
                        Operand _src1, uint32_t _src1_idx, Operand _src2);
         void exec(Addr addr, PIMInterface *pim, uint8_t pu,
                   bool is_write) override;
+        bool is_read() override;
+        bool is_write() override;
     };
 
     /*
@@ -168,12 +179,16 @@ class PIMInterface : public DRAMInterface
      * Start address of the PIM memory region
      */
     Addr pim_range_start;
+    AddrRange crf_range;
+    AddrRange pu_range;
     uint8_t decodeBank(Addr pkt_addr);
     int16_t *getVector(uint8_t pu, Operand op_type, uint32_t op_idx, Addr addr,
                        bool is_write);
     PIMInstruction *format_instruction(uint32_t raw_instr);
     Addr modifyAddrForBank(Addr original_addr, uint8_t target_bank);
     void executeKernel(PacketPtr pkt);
+    bool isPIMAddr(Addr addr);
+
 
   public:
     PIMInterface(const PIMInterfaceParams &_p);
