@@ -41,6 +41,7 @@ class PIMInterface : public DRAMInterface
         statistics::Scalar total_gaps_between_instrs;
         statistics::Formula avg_ticks_between_instrs;
         statistics::Scalar pim_conf_accesses;
+        statistics::Histogram hist_ticks_between_instrs;
     } pim_stats;
     enum PIMInstructionType
     {

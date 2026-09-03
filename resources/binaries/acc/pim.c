@@ -72,7 +72,7 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
     
 
     volatile int16_t *iterA = (volatile int16_t * volatile)A, *iterB = (volatile int16_t * volatile)B, *iterC = (volatile int16_t * volatile)C;
-
+    
     for(int e = 0; e < executions; ++e){
         pim_region[0] = 1; // Activate PIM mode
         asm volatile ("dmb ish\n\t"); // Absolute hardware barrier

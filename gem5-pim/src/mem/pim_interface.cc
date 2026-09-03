@@ -87,9 +87,13 @@ PIMInterface::PIMStats::PIMStats(PIMInterface &_pim)
                                  "Total gaps between instructions"),
       avg_ticks_between_instrs(this, "avg_ticks_between_instrs",
                                 "Average ticks between instructions"),
-      pim_conf_accesses(this, "pim_conf_accesses", "Number of PIM configuration accesses")
-    
-{avg_ticks_between_instrs = total_ticks_between_instrs / total_gaps_between_instrs;}
+      pim_conf_accesses(this, "pim_conf_accesses", "Number of PIM configuration accesses"),
+      hist_ticks_between_instrs(this, "hist_ticks_between_instrs", "Histogram of ticks between instructions")
+
+{
+    avg_ticks_between_instrs = total_ticks_between_instrs / total_gaps_between_instrs;
+    hist_ticks_between_instrs.init(100); // Initialize histogram with 100 buckets
+}
 
 uint8_t
 PIMInterface::decodeBank(Addr pkt_addr)
@@ -133,6 +137,7 @@ PIMInterface::getVector(uint8_t pu, Operand op_type, uint32_t op_idx,
 {
     PIMInterface::PIMProcessingUnit &pu_ref = processing_units[pu];
     uint8_t bank = decodeBank(addr);
+    DPRINTF(PIM, "Bank %d decoded for address %#x\n", bank, addr);
     switch (op_type) {
         case NONE:
             return NULL;
@@ -361,6 +366,7 @@ PIMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
         if(!pending_to_precharge){
             ++pim_stats.total_gaps_between_instrs;
             pim_stats.total_ticks_between_instrs += (fetch_allowed_at - last_fetch);
+            pim_stats.hist_ticks_between_instrs.sample(fetch_allowed_at - last_fetch);
         }
         last_fetch = fetch_allowed_at;
         pending_to_precharge = false;
