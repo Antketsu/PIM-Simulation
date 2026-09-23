@@ -1,0 +1,5 @@
+ADD
+
+LSQ -> MEM = 12~13 ns
+
+Si hay LSQ por medio ~35 ns entre instr

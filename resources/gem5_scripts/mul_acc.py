@@ -10,6 +10,8 @@ from gem5.components.cachehierarchies.classic.no_cache import NoCache
 from gem5.components.memory.single_channel import SingleChannelDDR4_2400
 from gem5.components.memory.hbm import HBM2Stack
 from gem5.components.processors.cpu_types import CPUTypes
+from gem5.components.processors.base_cpu_core import BaseCPUCore
+from gem5.components.processors.base_cpu_processor import BaseCPUProcessor
 from gem5.isas import ISA
 from gem5.resources.resource import obtain_resource
 from gem5.simulate.simulator import Simulator
@@ -19,12 +21,29 @@ from gem5.components.boards.pim_board import PIMBoard
 from gem5.components.processors.simple_processor import SimpleProcessor
 from gem5.resources.resource import BinaryResource  
 from gem5.components.memory.pim import PIMAccelerator
+from m5.objects import ArmMinorCPU
+
+
+class WideMinorCPU(ArmMinorCPU):
+    fetch1FetchLimit = 4
+    decodeInputWidth = 4
+    executeInputWidth = 4
+    executeIssueLimit = 4
+    executeMemoryIssueLimit = 4
+    executeCommitLimit = 4
+    executeMemoryCommitLimit = 4
+    executeMaxAccessesInMemory = 8
+    executeLSQRequestsQueueSize = 8
+    executeLSQTransfersQueueSize = 8
+    executeLSQStoreBufferSize = 16
+    executeLSQMaxStoreBufferStoresPerCycle = 8
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--rowsA", type=int, help="number of rows in matrix A")
-    parser.add_argument("--rowsB", type=int, help="number of rows in matrix B")
-    parser.add_argument("--colsB", type=int, help="number of columns in matrix B")
+    parser.add_argument("rowsA", type=int, help="number of rows in matrix A")
+    parser.add_argument("rowsB", type=int, help="number of rows in matrix B")
+    parser.add_argument("colsB", type=int, help="number of columns in matrix B")
+    parser.add_argument("print_result", type=int, help="print result")
     args = parser.parse_args()
     return args
 
@@ -53,7 +72,17 @@ cache_hierarchy = PrivateL1SharedL2CacheHierarchy(
 # Setup the system memory.
 memory = SingleChannelDDR4_2400(size="3GB")
 
-processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.MINOR)
+#processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.MINOR)
+#'''
+processor = BaseCPUProcessor(
+    cores=[
+        BaseCPUCore(
+            core=WideMinorCPU(cpu_id=0),
+            isa=ISA.ARM,
+        )
+    ]
+)
+#'''
 
 kernel_path = "/home/antonio/U/laburo/PIM-Simulation/resources/binaries/acc/mult"
 
@@ -74,6 +103,7 @@ board.set_se_binary_workload(
     arguments=[str(args.rowsA),
                 str(args.rowsB),
                 str(args.colsB),
+                str(args.print_result)
                 ])
 
 handler = exit_handler()

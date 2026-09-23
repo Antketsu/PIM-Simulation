@@ -53,6 +53,7 @@ int main(int argc, char *argv[]) {
     uint32_t rows_A = atoi(argv[1]);
     uint32_t rows_B = atoi(argv[2]);
     uint32_t cols_B = atoi(argv[3]);
+    uint8_t print_result = argc > 4 ? atoi(argv[4]) : 1;
 
     int16_t *A, *B, *C;
     A = malloc(rows_A * rows_B * sizeof(int16_t));
@@ -60,7 +61,18 @@ int main(int argc, char *argv[]) {
     B = (uintptr_t)C + (1 << 10);
     m5_exit(0);
     fill_matrix(A, B, rows_A, rows_B, cols_B);
-    matrix_multiplication(A, B, C, rows_A, rows_B, cols_B);    
+    /*
+    if(cols_B >= 512){
+        matrix_multiplication_mayor(A, B, C, rows_A, rows_B, cols_B); 
+    }
+    else{
+        multiplication_minor(A, B, C, rows_A, rows_B, cols_B); 
+    }
+    */
+    matrix_multiplication(A, B, C, rows_A, rows_B, cols_B); 
+    if(!print_result){
+        m5_exit(0);
+    }   
     print(C, rows_A, cols_B);
     free(A);
     return 0;

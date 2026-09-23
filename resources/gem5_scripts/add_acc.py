@@ -19,11 +19,21 @@ from gem5.components.boards.pim_board import PIMBoard
 from gem5.components.processors.simple_processor import SimpleProcessor
 from gem5.resources.resource import BinaryResource  
 from gem5.components.memory.pim import PIMAccelerator
+from m5.objects import ArmMinorCPU
+from gem5.components.processors.base_cpu_core import BaseCPUCore
+from gem5.components.processors.base_cpu_processor import BaseCPUProcessor
+
+class WideMinorCPU(ArmMinorCPU):
+        executeMaxAccessesInMemory = 8
+        #executeLSQRequestsQueueSize = 16
+        executeLSQTransfersQueueSize = 8
+        #executeLSQStoreBufferSize = 16
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--rows", type=int, help="number of rows")
-    parser.add_argument("--cols", type=int, help="number of columns")
+    parser.add_argument("rows", type=int, help="number of rows")
+    parser.add_argument("cols", type=int, help="number of columns")
+    parser.add_argument("print_result", type=int, help="print result")
     args = parser.parse_args()
     return args
 
@@ -52,7 +62,18 @@ cache_hierarchy = PrivateL1SharedL2CacheHierarchy(
 # Setup the system memory.
 memory = SingleChannelDDR4_2400(size="3GB")
 
-processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.MINOR)
+#'''
+processor = BaseCPUProcessor(
+    cores=[
+        BaseCPUCore(
+            core=WideMinorCPU(cpu_id=0),
+            isa=ISA.ARM,
+        )
+    ]
+)
+#'''
+
+#processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.MINOR)
 
 kernel_path = "/home/antonio/U/laburo/PIM-Simulation/resources/binaries/acc/add"
 
@@ -72,6 +93,7 @@ board.set_se_binary_workload(
     binary=BinaryResource(kernel_path),
     arguments=[str(args.rows),
                 str(args.cols),
+                str(args.print_result)
                 ])
 
 handler = exit_handler()

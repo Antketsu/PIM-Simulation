@@ -22,35 +22,35 @@ def parse_folder_name(name):
     """Extracts mode and size from the folder name (e.g., add_all_cores_128x128)"""
     size_match = re.search(r"(\d+x\d+)$", name)
     size = size_match.group(1) if size_match else "unknown"
-    mode = name.replace("add_", "").replace("mul_", "").replace(size, "").strip("_")
+    mode = (
+        name.replace("add_", "")
+        .replace("mul_", "")
+        .replace("gemv_", "")
+        .replace(size, "")
+        .strip("_")
+    )
     if mode == "no_acc_opt":
         mode = "cpu_vect"
     return mode, size
 
 
-def add_difference_rows(df, col):
-    """Add a computed Difference row for each size when exactly two modes exist."""
-    pivot = df.pivot(index="Size", columns="Mode", values=col)
-    if pivot.shape[1] != 2:
-        return df
-
-    pivot = pivot[pivot.columns.sort_values()]
-    diff = (pivot.iloc[:, 1] - pivot.iloc[:, 0]).abs().dropna()
-    if diff.empty:
-        return df
-
-    diff_df = diff.reset_index(name=col)
-    diff_df["Mode"] = "Difference"
-    return pd.concat([df, diff_df], ignore_index=True, sort=False)
-
-
 def plot_single_metric(col, title, palette, k_name, df_k):
     """Generates and saves an individual plot for a specific metric"""
+    if col == "sim_seconds":
+        speedup = df_k.pivot_table(
+            index="Size", columns="execution_mode", values=col, aggfunc="last"
+        )
+        if {"acc", "no_acc_opt"}.issubset(speedup.columns):
+            speedup_rows = speedup[["no_acc_opt", "acc"]].dropna().reset_index()
+            speedup_rows[col] = speedup_rows["no_acc_opt"] / speedup_rows["acc"]
+            speedup_rows["Mode"] = "pim_speedup"
+            df_k = pd.concat(
+                [df_k, speedup_rows[["Size", col, "Mode"]]], ignore_index=True
+            )
+
     fig, ax = plt.subplots(figsize=(10, 6))
 
     hue_order = sorted(df_k["Mode"].unique())
-    if "Difference" in hue_order:
-        hue_order = [m for m in hue_order if m != "Difference"] + ["Difference"]
 
     barplot = sns.barplot(
         x="Size",
@@ -77,11 +77,13 @@ def plot_single_metric(col, title, palette, k_name, df_k):
         bbox_to_anchor=(1.02, 1), loc="upper left", borderaxespad=0.0
     )
 
-    for container in barplot.containers:
+    for mode, container in zip(hue_order, barplot.containers):
         labels = []
+        is_speedup = col == "sim_seconds" and mode == "pim_speedup"
         for bar in container:
             val = bar.get_height()
-            labels.append(human_format(val) if val > 0 else "")
+            label = human_format(val) if val > 0 else ""
+            labels.append(f"{label}x" if is_speedup and label else label)
         ax.bar_label(
             container,
             labels=labels,
@@ -134,8 +136,7 @@ def generar_graficas_sin_solapamiento(csv_file):
             continue
 
         for col, title, palette in all_metrics:
-            df_plot = add_difference_rows(df_k, col)
-            plot_single_metric(col, title, palette, k_name, df_plot)
+            plot_single_metric(col, title, palette, k_name, df_k)
 
 
 

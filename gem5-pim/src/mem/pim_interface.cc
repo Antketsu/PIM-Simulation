@@ -94,7 +94,6 @@ PIMInterface::PIMStats::PIMStats(PIMInterface &_pim)
     avg_ticks_between_instrs = total_ticks_between_instrs / total_gaps_between_instrs;
     hist_ticks_between_instrs.init(100); // Initialize histogram with 100 buckets
 }
-
 uint8_t
 PIMInterface::decodeBank(Addr pkt_addr)
 {
@@ -315,6 +314,7 @@ PIMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
         Rank &rank_ref = *ranks[0];
         Bank &bank_ref = rank_ref.banks[mem_pkt->bank];
         Tick fetch_allowed_at = std::max(next_burst_at, curTick());
+        assert(fetch_allowed_at >= mem_pkt->entryTime);
         if (pending_to_precharge || bank_ref.openRow != mem_pkt->row) {
             if(crf[pc]->is_read()){
                 stats.read_misses++;
@@ -356,9 +356,9 @@ PIMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
         //col_allowed_at = std::max(col_allowed_at, next_burst_at);
         bool is_exit = (crf[pc]->getType() == "EXIT");
         Tick next_instr = fetch_allowed_at + (is_exit ? 4 * 5 * tCK : 4 * tCK);
-        mem_pkt->readyTime = curTick();
-        DPRINTF(PIM_PIPELINE, "Instruction with addr 0x%x starts at %d, next at %d\n",
-                mem_pkt->getAddr(), fetch_allowed_at, next_instr);
+        mem_pkt->readyTime = fetch_allowed_at;
+        DPRINTF(PIM_PIPELINE, "Instruction with addr 0x%x starts at %d, current tick: %d, current next_burst_at: %d\n",
+                mem_pkt->getAddr(), fetch_allowed_at, curTick(), next_burst_at);
         
         if(mem_pkt->isRead()){
             ++rank_ref.outstandingEvents;
@@ -370,7 +370,7 @@ PIMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
         }
         last_fetch = fetch_allowed_at;
         pending_to_precharge = false;
-        return std::make_pair(curTick(), next_instr);
+        return std::make_pair(fetch_allowed_at, next_instr);
     }
     else{
         return DRAMInterface::doBurstAccess(mem_pkt, next_burst_at, queue);

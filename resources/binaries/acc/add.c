@@ -68,6 +68,7 @@ int main(int argc, char *argv[]) {
  
     uint32_t rows = atoi(argv[1]);
     uint32_t cols = atoi(argv[2]);
+    uint8_t print_result = argc > 3 ? atoi(argv[3]) : 1;
 
     uint64_t elems = rows * cols;
 
@@ -77,6 +78,9 @@ int main(int argc, char *argv[]) {
     m5_exit(0);
     C = fill_matrix(A, B, elems);
     add(A, B, C, elems);    
+    if(!print_result){
+        m5_exit(0);
+    }
     print(C, rows, cols);
     return 0;
 }

@@ -1,3 +1,18 @@
 {
-    "cmake.ignoreCMakeListsMissing": true
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/gem5-pim/src/python",
+    "${workspaceFolder}/gem5-pim/src",
+    "${workspaceFolder}/gem5-pim/src/arch",
+    "${workspaceFolder}/gem5-pim/configs",
+    "${workspaceFolder}/gem5-pim/build/ARM/python"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/gem5-pim/src/python",
+    "${workspaceFolder}/gem5-pim/src",
+    "${workspaceFolder}/gem5-pim/src/arch",
+    "${workspaceFolder}/gem5-pim/configs",
+    "${workspaceFolder}/gem5-pim/build/ARM/python"
+  ],
+  "python.analysis.indexing": true,
+  "cmake.ignoreCMakeListsMissing": true
 }
