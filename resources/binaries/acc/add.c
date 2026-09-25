@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
     m5_work_begin(0, 0);
     add(A, B, C, elems);
     m5_work_end(0, 0);
-    m5_exit(0);    
+    //m5_exit(0);    
     print(C, rows, cols);
     return 0;
 }
