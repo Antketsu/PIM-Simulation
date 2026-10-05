@@ -28,6 +28,8 @@ def parse_stats(folder_path):
         'pim_dram_read_misses': 0,
         'pim_dram_write_hits': 0,
         'pim_dram_write_misses': 0,
+        'perfect_gaps': 0,
+        'total_gaps_between_instrs': 0,
     }
     
     with open(stats_file, 'r') as f:
@@ -90,6 +92,11 @@ def parse_stats(folder_path):
                 elif name == 'board.pim.mem_ctrl.dram.write_misses':
                     data['pim_dram_write_misses'] = int(val)
 
+                elif name == 'board.pim.mem_ctrl.dram.perfect_gaps':
+                    data['perfect_gaps'] = int(val)
+                elif name == 'board.pim.mem_ctrl.dram.total_gaps_between_instrs':
+                    data['total_gaps_between_instrs'] = int(val)
+
                 elif name == 'board.processor.cores.core.lsq.totalMemInsts':
                     data['lsq_total_mem_insts'] = int(val)
                 elif name == 'board.processor.cores.core.lsq.totalLsqCycles':
@@ -99,6 +106,10 @@ def parse_stats(folder_path):
 
     # Calculamos la columna final de accesos a memoria
     data['mem_total_accesses'] = data['total_mem_reads'] + data['total_mem_writes'] - data['pim_conf_accesses']
+    total_gaps = data['total_gaps_between_instrs']
+    data['perfect_gaps_pct'] = (
+        data['perfect_gaps'] / total_gaps * 100 if total_gaps else None
+    )
     return data
 
 
@@ -159,6 +170,7 @@ def main():
             'mem_dram_write_hits', 'mem_dram_write_misses',
             'pim_dram_read_hits', 'pim_dram_read_misses',
             'pim_dram_write_hits', 'pim_dram_write_misses',
+            'perfect_gaps_pct',
             'lsq_total_mem_insts', 'lsq_total_cycles', 'lsq_avg_cycles']
     
     # Filtrar solo por las columnas que realmente existan en el df para evitar KeyErrors

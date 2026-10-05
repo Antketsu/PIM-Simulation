@@ -23,7 +23,7 @@ from gem5.resources.resource import BinaryResource
 from gem5.components.memory.pim import PIMAccelerator
 from m5.objects import ArmMinorCPU
 
-
+'''
 class WideMinorCPU(ArmMinorCPU):
     fetch1FetchLimit = 4
     decodeInputWidth = 4
@@ -37,6 +37,9 @@ class WideMinorCPU(ArmMinorCPU):
     executeLSQTransfersQueueSize = 8
     executeLSQStoreBufferSize = 16
     executeLSQMaxStoreBufferStoresPerCycle = 8
+'''
+class WideMinorCPU(ArmMinorCPU):
+    executeLSQRequestsQueueSize = 2
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -72,8 +75,8 @@ cache_hierarchy = PrivateL1SharedL2CacheHierarchy(
 # Setup the system memory.
 memory = SingleChannelDDR4_2400(size="3GB")
 
-#processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.MINOR)
-#'''
+processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.MINOR)
+'''
 processor = BaseCPUProcessor(
     cores=[
         BaseCPUCore(
@@ -82,9 +85,9 @@ processor = BaseCPUProcessor(
         )
     ]
 )
-#'''
+'''
 
-kernel_path = "/home/antonio/U/laburo/PIM-Simulation/resources/binaries/acc/mult"
+kernel_path = "/homelocal/antoma19_local/u/PIM-Simulation/resources/binaries/acc/mult_copy"
 
 pim = PIMAccelerator(size="3GB")
 

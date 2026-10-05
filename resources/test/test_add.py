@@ -8,7 +8,7 @@ config_file="../gem5_scripts/add_acc.py"
 def run_simulation(size):
     print(f"Running simulation for size {size}x{size}...")
     outdir=f"add_acc_{size}x{size}"
-    script_args = f"--rows {size} --cols {size} "
+    script_args = f"{size} {size} 0"
     command = f"{gem5_path} -d ./test_out/{outdir} -r {config_file} {script_args}"
     subprocess.run(command, shell=True, executable="/bin/bash")
     print(f"Simulation for size {size}x{size} completed!")

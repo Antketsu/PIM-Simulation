@@ -23,7 +23,7 @@
         "m5ops_base": 4294901760,
         "mem_mode": "timing",
         "mem_ranges": [
-            "0:3221225472"
+            "0:536870912"
         ],
         "memories": [
             "board.memory.mem_ctrl.dram"
@@ -751,7 +751,7 @@
             "name": "clk_domain",
             "path": "board.clk_domain",
             "clock": [
-                1000
+                333
             ],
             "domain_id": -1,
             "eventq_index": 0,
@@ -860,7 +860,7 @@
                             "leaders": [],
                             "possible_states": []
                         },
-                        "range": "0:3221225472",
+                        "range": "0:536870912",
                         "ranks_per_channel": 2,
                         "read_buffer_size": 64,
                         "tAAD": 833,
@@ -2710,19 +2710,22 @@
                                 "name": "workload",
                                 "path": "board.processor.cores.core.workload",
                                 "cmd": [
-                                    "/home/antonio/U/laburo/PIM-Simulation/resources/binaries/no_acc/opt/mult",
+                                    "/homelocal/antoma19_local/u/PIM-Simulation/resources/binaries/no_acc/openblas_fp16_sve_gemm",
                                     "128",
                                     "128",
                                     "128"
                                 ],
-                                "cwd": "/home/antonio/U/laburo/PIM-Simulation/resources/test",
+                                "cwd": "/homelocal/antoma19_local/u/PIM-Simulation/resources/binaries/no_acc",
                                 "drivers": [],
                                 "egid": 100,
-                                "env": [],
+                                "env": [
+                                    "OPENBLAS_NUM_THREADS=1",
+                                    "OMP_NUM_THREADS=1"
+                                ],
                                 "errout": "cerr",
                                 "euid": 100,
                                 "eventq_index": 0,
-                                "executable": "/home/antonio/U/laburo/PIM-Simulation/resources/binaries/no_acc/opt/mult",
+                                "executable": "/homelocal/antoma19_local/u/PIM-Simulation/resources/binaries/no_acc/openblas_fp16_sve_gemm",
                                 "gid": 100,
                                 "input": "cin",
                                 "kvmInSE": false,

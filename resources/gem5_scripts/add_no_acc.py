@@ -22,9 +22,8 @@ from gem5.components.memory.pim import PIMAccelerator
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--rows", type=int, help="number of rows")
-    parser.add_argument("--cols", type=int, help="number of columns")
-    parser.add_argument("--opt", action="store_true", help="indicate to execute the optimized kernel")
+    parser.add_argument("rows", type=int, help="number of rows")
+    parser.add_argument("cols", type=int, help="number of columns")
     args = parser.parse_args()
     return args
 
@@ -54,7 +53,7 @@ board = SimpleBoard(
 
 args = parse_args()
 
-kernel_path = "/home/antonio/U/laburo/PIM-Simulation/resources/binaries/no_acc/" + ("opt/" if args.opt else "") + "add"
+kernel_path = "/homelocal/antoma19_local/u/PIM-Simulation/resources/binaries/no_acc/add"
 
 board.set_se_binary_workload(
     binary=BinaryResource(kernel_path),

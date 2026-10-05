@@ -3,12 +3,12 @@ import subprocess
 import threading
 
 gem5_path="../../gem5-pim/build/ARM/gem5.opt"
-config_file="../gem5_scripts/matrix_multiplication_acc.py"
+config_file="../gem5_scripts/mul_acc.py"
 
 def run_simulation(lenv, cols):
     print(f"Running simulation for vector {lenv} and matrix {lenv}x{cols}...")
     outdir=f"gemv_acc_{lenv}x{cols}"
-    script_args = f"--rowsA {1} --rowsB {lenv} --colsB {cols}"
+    script_args = f"{1} {lenv} {cols} 0"
     command = f"{gem5_path} -d ./test_out/{outdir} -r {config_file} {script_args}"
     subprocess.run(command, shell=True, executable="/bin/bash")
     print(f"Simulation for size {lenv}x{cols} completed!")

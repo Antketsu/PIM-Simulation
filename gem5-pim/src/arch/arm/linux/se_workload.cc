@@ -744,7 +744,10 @@ class SyscallTable64 : public SyscallDescTable<EmuLinux::SyscallABI64>
                {base + 232, "mincore"},
                {base + 233, "madvise", ignoreFunc},
                {base + 234, "remap_file_pages"},
-               {base + 235, "mbind"},
+               // NUMA page placement is not modeled in SE mode. OpenBLAS
+               // uses mbind() during its buffer setup, so ignore it like the
+               // x86 and RISC-V syscall tables do.
+               {base + 235, "mbind", ignoreFunc},
                {base + 236, "get_mempolicy"},
                {base + 237, "set_mempolicy"},
                {base + 238, "migrate_pages"},

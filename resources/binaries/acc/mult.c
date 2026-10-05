@@ -6,7 +6,7 @@
 void fill_matrix(int16_t* A, int16_t *B, uint32_t rowsA, uint32_t rowsB, uint32_t cols){
     for(int i = 0; i < rowsA; ++i){
         for(int j = 0; j < rowsB; ++j){
-            A[i * rowsB + j] = i + 2;
+            A[i * rowsB + j] = (i + j) % 32768;
         }
     }
 

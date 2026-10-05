@@ -36,6 +36,12 @@ def parse_folder_name(name):
 
 def plot_single_metric(col, title, palette, k_name, df_k):
     """Generates and saves an individual plot for a specific metric"""
+    if col == "perfect_gaps_pct":
+        # Perfect gaps are a PIM DRAM statistic, so CPU vectorized runs do not apply.
+        df_k = df_k[df_k["Mode"] != "cpu_vect"]
+        if df_k.empty:
+            return
+
     if col == "sim_seconds":
         speedup = df_k.pivot_table(
             index="Size", columns="execution_mode", values=col, aggfunc="last"
@@ -63,15 +69,19 @@ def plot_single_metric(col, title, palette, k_name, df_k):
         edgecolor="black",
     )
 
-    ax.set_yscale("log")
+    if col == "perfect_gaps_pct":
+        ax.set_ylim(0, 110)
+        ax.set_yticks(range(0, 101, 10))
+    else:
+        ax.set_yscale("log")
+        current_ylim = ax.get_ylim()
+        ax.set_ylim(current_ylim[0], current_ylim[1] * 5)
+
     ax.set_ylabel(f"{title}", fontsize=11, fontweight="bold")
     if k_name == "gemv":
         ax.set_xlabel("Vector Size x Square Matrix Size", fontsize=11, fontweight="bold")
     else:
         ax.set_xlabel("Matrix Size", fontsize=11, fontweight="bold")
-
-    current_ylim = ax.get_ylim()
-    ax.set_ylim(current_ylim[0], current_ylim[1] * 5)
 
     ax.legend(
         bbox_to_anchor=(1.02, 1), loc="upper left", borderaxespad=0.0
@@ -83,6 +93,8 @@ def plot_single_metric(col, title, palette, k_name, df_k):
         for bar in container:
             val = bar.get_height()
             label = human_format(val) if val > 0 else ""
+            if col == "perfect_gaps_pct" and label:
+                label = f"{label}%"
             labels.append(f"{label}x" if is_speedup and label else label)
         ax.bar_label(
             container,
@@ -125,6 +137,7 @@ def generar_graficas_sin_solapamiento(csv_file):
         ("l1i_cache_accesses", "L1I Cache Accesses", "Reds"),
         ("l2_cache_accesses", "L2 Cache Accesses", "Reds"),
         ("mem_total_accesses", "Total Memory Accesses", "Greens"),
+        ("perfect_gaps_pct", "Perfect Gaps (%)", "Greens"),
         ("lsq_total_mem_insts", "Total Memory Instructions in LSQ", "Purples"),
         ("lsq_total_cycles", "Total Cycles in LSQ", "Oranges"),
         ("lsq_avg_cycles", "Average Cycles per Instruction in LSQ", "Greys"),

@@ -1227,8 +1227,11 @@ LSQ::tryToSend(LSQRequestPtr request)
             DPRINTF(MinorMem, "Sent data memory request\n");
 
             numAccessesInMemorySystem++;
-            DPRINTF(LSQ_MINOR, "Sending from LSQ to memory at tick %d\n",
-                    curTick());
+            DPRINTF(LSQ_MINOR,
+                    "Sending from LSQ to memory at tick %d"
+                    " (requests: %d, transfers: %d)\n",
+                    curTick(), requests.occupiedSpace(),
+                    transfers.occupiedSpace());
 
             request->stepToNextPacket();
 

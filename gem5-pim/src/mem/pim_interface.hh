@@ -40,6 +40,7 @@ class PIMInterface : public DRAMInterface
         statistics::Scalar total_ticks_between_instrs;
         statistics::Scalar total_gaps_between_instrs;
         statistics::Formula avg_ticks_between_instrs;
+        statistics::Scalar perfect_gaps;
         statistics::Scalar pim_conf_accesses;
         statistics::Histogram hist_ticks_between_instrs;
     } pim_stats;
@@ -181,7 +182,7 @@ class PIMInterface : public DRAMInterface
      */
     Addr pim_range_start;
     AddrRange crf_range;
-    AddrRange pu_range;
+    AddrRange srf_range;
     uint8_t decodeBank(Addr pkt_addr);
     int16_t *getVector(uint8_t pu, Operand op_type, uint32_t op_idx, Addr addr,
                        bool is_write);

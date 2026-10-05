@@ -10,7 +10,7 @@ fi
 gem5_exec="gem5-pim/build/ARM/gem5.opt"
 output_dir="$1"
 kernel="$2"
-debug=1
+debug=0
 gem5_script="${kernel}_acc.py"
 shift 2
 
@@ -25,9 +25,10 @@ fi
 "$gem5_exec" $DEBUG_FLAGS -d temp -r resources/gem5_scripts/"$gem5_script" "$@"
 
 cp temp/stats.txt "$output_dir/stats.txt"
-cp  temp/simout.txt "$output_dir/simout.txt"
-
+sed -n '/Entering/,$p' "temp/simout.txt" > "$output_dir/simout.txt"
+#cp temp/simout.txt "$output_dir/simout.txt"
 grep "hist_ticks_between_instrs" "$output_dir/stats.txt" > "$output_dir/hist_ticks_between_instrs.txt"
+
 
 python3 "resources/analisis/plot_hist_ticks_between_instrs.py" \
 	"$output_dir/stats.txt"

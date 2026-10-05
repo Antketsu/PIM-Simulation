@@ -2,7 +2,7 @@
 #include <stdatomic.h>
 uint8_t *pim_region;
 uint32_t *crf;
-int16_t *pu_space;
+int16_t *srf;
 uint8_t instr_idx = 0;
 
 size_t pim_size = 0x1000000;  // 16 MB
@@ -79,17 +79,17 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
         for(int i = 0; i < loops; i += loops_per_row){
             for(int j = 0; j < loops_per_row; ++j){
                 for(int k = 0; k < regs; ++k){
-                    fake_variable = *(iterA); //MOV
-                    fake_variable = *(iterB); //ADD
+                    *(iterA) = 0; //MOV
+                    *(iterB) = 0; //ADD
                     iterA += 16; iterB += 16;
                 }
                 //asm volatile ("dmb ish\n\t"); // Absolute hardware barrier
                 for(int k = 0; k < regs; ++k){
-                    fake_variable = *(iterC); //MOV
+                    *(iterC) = 0; //MOV
                     iterC += 16;
                 }
                 //asm volatile ("dmb ish\n\t"); // Absolute hardware barrier 
-                fake_variable = *(iterC); //JUMP 
+                *(iterC) = 0; //JUMP 
             }
 
             //End of row
@@ -125,160 +125,7 @@ int16_t* increment_iter(int16_t *iter){
     return iter;
 }
 
-int multiplication_minor(int16_t *A, int16_t *B, int16_t *C, uint32_t A_rows, uint32_t B_rows, uint32_t B_cols){
-    m5_work_begin(0, 0);
-    uint16_t loops = B_cols / (SIMD_WIDTH * PUs);
-    uint8_t regs = 8;
-    write_mul_block(regs);
-    //JUMP 3, loops
-    crf[instr_idx++] = CTL_INST(1, regs + 2, loops - 1);
-    //EXIT
-    crf[instr_idx++] = CTL_INST(2, 0, 0);
-
-    uint32_t rowA_idx = 0, colA_idx = 0;
-    *(uint8_t *)(pim_region + 4) = 1; 
-    
-    volatile int16_t*  B_iter = (volatile int16_t* )B;
-    volatile int16_t*  C_iter = (volatile int16_t* )C;
-    volatile int16_t * C_current_row_begin = (volatile int16_t* )C;
-
-    while(rowA_idx * B_rows + colA_idx < A_rows * B_rows){
-        uint8_t rounds_per_row_buffer = 512 / B_cols;
-        for(int i = 0; i < rounds_per_row_buffer; ++i){
-            if(colA_idx == B_rows){ 
-                ++rowA_idx;
-                colA_idx = 0;
-                B_iter = (volatile int16_t* )B;
-                C_current_row_begin = C_iter; 
-            }
-            else{
-                C_iter = C_current_row_begin;  
-            }
-    
-            for(int i = 0; i < regs; ++i){
-                for(int j = 0; j < PUs; ++j){
-                    pu_space[j * PU_SIZE + i] = A[rowA_idx * B_rows + colA_idx];
-                }
-                ++colA_idx;
-            }
-    
-            int16_t fake_variable;
-    
-            pim_region[0] = 1; // Activa modo PIM
-    
-    
-            asm volatile ("dmb ish\n\t"); // Barrera de hardware absoluta
-            for (int colB_idx = 0; colB_idx < loops; ++colB_idx) {
-                
-    
-                fake_variable = *(C_iter); // MOV
-                
-                asm volatile(
-                    "ldrh %w[out], [%[b_iter], #0]\n\t" // MAC
-                    "ldrh %w[out], [%[b_iter], #32]\n\t"
-                    "ldrh %w[out], [%[b_iter], #64]\n\t"
-                    "ldrh %w[out], [%[b_iter], #96]\n\t"
-                    "ldrh %w[out], [%[b_iter], #128]\n\t"
-                    "ldrh %w[out], [%[b_iter], #160]\n\t"
-                    "ldrh %w[out], [%[b_iter], #192]\n\t"
-                    "ldrh %w[out], [%[b_iter], #224]\n\t"
-                    : [out] "=r" (fake_variable)
-                    : [b_iter] "r" (B_iter)
-                    : "memory");
-                B_iter += 16 * regs;
-                
-                fake_variable = *(C_iter); // MOV
-    
-                C_iter += 16;    
-                (void)*B_iter;  // Trigger JUMP
-                
-                if (((uintptr_t)C_iter & BANK_ROW_FULL_MASK) == 0) {
-                    C_iter = (volatile int16_t*)((uintptr_t)C_iter + BANK_ROW_INCREMENT - 1024);
-                }
-            }
-            
-            (void)*C_iter; // Trigger EXIT
-        }
-        B_iter = (volatile int16_t*)((uintptr_t)B_iter + BANK_ROW_INCREMENT - 1024);
-    }
-    m5_work_end(0, 0);
-    return 0;
-}
-
-int matrix_multiplication_mayor(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, uint32_t B_rows, uint32_t B_cols){
-    m5_work_begin(0, 0);
-    uint16_t loops = B_cols / (SIMD_WIDTH * PUs);
-    uint8_t regs = 8;
-    write_mul_block(regs);
-    //JUMP 3, loops
-    crf[instr_idx++] = CTL_INST(1, regs + 2, loops - 1);
-    //EXIT
-    crf[instr_idx++] = CTL_INST(2, 0, 0);
-
-    uint32_t rowA_idx = 0, colA_idx = 0;
-    *(uint8_t *)(pim_region + 4) = 1; 
-    
-    volatile int16_t*  B_iter = (volatile int16_t* )B;
-    volatile int16_t*  C_iter = (volatile int16_t* )C;
-    volatile int16_t * C_current_row_begin = (volatile int16_t* )C;
-
-    while(rowA_idx * B_rows + colA_idx < A_rows * B_rows){
-        if(colA_idx == B_rows){ 
-            ++rowA_idx;
-            colA_idx = 0;
-            B_iter = (volatile int16_t* )B;
-            C_current_row_begin = C_iter; 
-        }
-        else{
-            C_iter = C_current_row_begin;  
-        }
-
-        for(int i = 0; i < regs; ++i){
-            for(int j = 0; j < PUs; ++j){
-                pu_space[j * PU_SIZE + i] = A[rowA_idx * B_rows + colA_idx];
-            }
-            ++colA_idx;
-        }
-
-        int16_t fake_variable;
-
-        pim_region[0] = 1; // Activa modo PIM
-
-
-        asm volatile ("dmb ish\n\t"); // Barrera de hardware absoluta
-        for (int colB_idx = 0; colB_idx < loops; colB_idx += 512) {
-            
-            uint8_t row_buffers_per_row = 512 / B_rows;
-
-            for(int i = 0; i < row_buffers_per_row; ++i){
-                fake_variable = *(C_iter); // MOV
-                
-                for(int i = 0; i < regs; ++i){
-                    fake_variable = *(B_iter); // MAC
-                    B_iter += 16; 
-                }
-                
-                fake_variable = *(C_iter); // MOV
-    
-                C_iter += 16;    
-                (void)*B_iter;  // Trigger JUMP
-                
-                if (((uintptr_t)C_iter & BANK_ROW_FULL_MASK) == 0) {
-                    C_iter = (volatile int16_t*)((uintptr_t)C_iter + BANK_ROW_INCREMENT - 1024);
-                }
-            }
-            B_iter = (volatile int16_t*)((uintptr_t)B_iter + BANK_ROW_INCREMENT - 1024);
-
-        }
-        
-        (void)*C_iter; // Trigger EXIT
-    }
-    m5_work_end(0, 0);
-    return 0;
-}
-
 int matrix_multiplication(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, uint32_t B_rows, uint32_t B_cols){
-    m5_work_begin(0, 0);
     uint16_t loops = B_cols / (SIMD_WIDTH * PUs);
     uint8_t regs = 8;
     write_mul_block(regs);
@@ -306,35 +153,30 @@ int matrix_multiplication(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, u
         }
 
         
-        for(int i = 0; i < regs; ++i){
-            for(int j = 0; j < PUs; ++j){
-                pu_space[j * PU_SIZE + i] = A[rowA_idx * B_rows + colA_idx];
-            }
+        for(int i = 0; i < regs; ++i){  
+            srf[i] = A[rowA_idx * B_rows + colA_idx];
             ++colA_idx;
         }
         
-       colA_idx += regs;
 
         int16_t fake_variable;
-
+        volatile int8_t branch_prediction_dummy = 0;
         pim_region[0] = 1; // Activa modo PIM
 
 
-        asm volatile ("dmb ish\n\t"); // Barrera de hardware absoluta
         for (int colB_idx = 0; colB_idx < loops; ++colB_idx) {
-            
 
-            (void)*(C_iter); // MOV
+            *(C_iter) = 0; // MOV
             
             for(int i = 0; i < regs; ++i){
-                (void)*(B_iter); // MAC
+                *(B_iter) = 0; // MAC
                 B_iter += 16; 
             }
             
-            (void)*(C_iter); // MOV
+            *(C_iter) = 0; // MOV
 
             C_iter += 16;    
-            (void)*B_iter;  // Trigger JUMP
+            *(B_iter) = 0;  // Trigger JUMP
             
             
             if (((uintptr_t)B_iter & BANK_ROW_FULL_MASK) == 0) {
@@ -344,14 +186,12 @@ int matrix_multiplication(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, u
             if (((uintptr_t)C_iter & BANK_ROW_FULL_MASK) == 0) {
                 C_iter = (volatile int16_t*)((uintptr_t)C_iter + BANK_ROW_INCREMENT - 1024);
             }
-            
-        }
-        
-        (void)*C_iter; // Trigger EXIT
+        }  
+        *(B_iter) = 0; // Trigger EXIT
     }
-    m5_work_end(0, 0);
     return 0;
 }
+
 
 int init_pim(){
     pim_region = mmap(
@@ -368,6 +208,6 @@ int init_pim(){
         return 1;
     }
     crf = (uint32_t *)(pim_region + 8); 
-    pu_space = (int16_t *)(crf + 32);
+    srf = (int16_t *)(crf + 32);
     return 0;
 }

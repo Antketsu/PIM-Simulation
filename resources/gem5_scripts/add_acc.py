@@ -62,7 +62,7 @@ cache_hierarchy = PrivateL1SharedL2CacheHierarchy(
 # Setup the system memory.
 memory = SingleChannelDDR4_2400(size="3GB")
 
-#'''
+'''
 processor = BaseCPUProcessor(
     cores=[
         BaseCPUCore(
@@ -71,11 +71,11 @@ processor = BaseCPUProcessor(
         )
     ]
 )
-#'''
+'''
 
-#processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.MINOR)
+processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.MINOR)
 
-kernel_path = "/home/antonio/U/laburo/PIM-Simulation/resources/binaries/acc/add"
+kernel_path = "/homelocal/antoma19_local/u/PIM-Simulation/resources/binaries/acc/add"
 
 pim = PIMAccelerator(size="3GB")
 

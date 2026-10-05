@@ -41,13 +41,9 @@ PIMInterface::PIMInterface(const PIMInterfaceParams &_p)
       all_bank_mode(false),
       pim_range_start(_p.pim_range_start)
 {   
-    size_t srf_size = srf_entries * 2; // 16 bits per scalar register
-    size_t grf_size =
-        grf_entries * simd_width * 2; // 16 bits per vector register entry
     crf_range = AddrRange(pim_range_start + 8, pim_range_start + 8 + crf_entries * 4);
-    pu_range = AddrRange(
-          crf_range.end(),
-          crf_range.end() + processing_units.size() * (srf_size + grf_size));
+    size_t srf_size = srf_entries * 2; // 16 bits per scalar register
+    srf_range = AddrRange(crf_range.end(), crf_range.end() + srf_size);
     DPRINTF(PIM,
             "Initialized PIMInterface with CRF entries %d, GRF entries %d, "
             "SRF entries %d, SIMD width %d, PIM range start %#x\n",
@@ -87,12 +83,14 @@ PIMInterface::PIMStats::PIMStats(PIMInterface &_pim)
                                  "Total gaps between instructions"),
       avg_ticks_between_instrs(this, "avg_ticks_between_instrs",
                                 "Average ticks between instructions"),
+      perfect_gaps(this, "perfect_gaps",
+                    "Number of perfect gaps between instructions"),
       pim_conf_accesses(this, "pim_conf_accesses", "Number of PIM configuration accesses"),
       hist_ticks_between_instrs(this, "hist_ticks_between_instrs", "Histogram of ticks between instructions")
 
 {
     avg_ticks_between_instrs = total_ticks_between_instrs / total_gaps_between_instrs;
-    hist_ticks_between_instrs.init(100); // Initialize histogram with 100 buckets
+    hist_ticks_between_instrs.init(200); // Initialize histogram with 100 buckets
 }
 uint8_t
 PIMInterface::decodeBank(Addr pkt_addr)
@@ -136,7 +134,7 @@ PIMInterface::getVector(uint8_t pu, Operand op_type, uint32_t op_idx,
 {
     PIMInterface::PIMProcessingUnit &pu_ref = processing_units[pu];
     uint8_t bank = decodeBank(addr);
-    DPRINTF(PIM, "Bank %d decoded for address %#x\n", bank, addr);
+    //DPRINTF(PIM, "Bank %d decoded for address %#x\n", bank, addr);
     switch (op_type) {
         case NONE:
             return NULL;
@@ -367,6 +365,9 @@ PIMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
             ++pim_stats.total_gaps_between_instrs;
             pim_stats.total_ticks_between_instrs += (fetch_allowed_at - last_fetch);
             pim_stats.hist_ticks_between_instrs.sample(fetch_allowed_at - last_fetch);
+            if(fetch_allowed_at - last_fetch == 4 * tCK){
+                ++pim_stats.perfect_gaps;
+            }
         }
         last_fetch = fetch_allowed_at;
         pending_to_precharge = false;
@@ -382,7 +383,7 @@ bool
 PIMInterface::isPIMAddr(Addr addr)
 {
     return addr == pim_range_start || addr == pim_range_start + 4 ||
-           crf_range.contains(addr) || pu_range.contains(addr);
+           crf_range.contains(addr) || srf_range.contains(addr);
 }
 
 void
@@ -393,12 +394,9 @@ PIMInterface::access(PacketPtr pkt)
     //        pkt->getAddr(), pim_mode);
     if (pim_mode) {
         executeKernel(pkt);
-    } else {
+    }
+    else {
         Addr addr = pkt->getAddr();
-        // skip pim and single bank registers, 32 bits per CRF entry, 
-        size_t srf_size = srf_entries * 2; // 16 bits per scalar register
-        size_t grf_size =
-            grf_entries * simd_width * 2; // 16 bits per vector register entry
         if (addr == pim_range_start) {
             // Access PIM mode register
             pim_mode = true;
@@ -432,69 +430,54 @@ PIMInterface::access(PacketPtr pkt)
                 pim_stats.crf_reads++;
             }
             pim_stats.pim_conf_accesses++;
-        } else if (pu_range.contains(addr)) {
+        } else if (srf_range.contains(addr)) {
             pim_stats.pim_conf_accesses++;
-            // Get PU index
-            uint8_t pu_idx = (addr - crf_range.end()) / (srf_size + grf_size);
-            if (pu_idx >= processing_units.size()) {
-                panic(
-                    "PU index %d out of bounds for processing units size %d\n",
-                    pu_idx, processing_units.size());
+            // Access SRF
+            int idx = (addr - srf_range.start()) / 2;
+            uint16_t val = *(pkt->getConstPtr<uint16_t>());
+            if (pkt->isWrite()) {
+                pim_stats.srf_writes++;
+            } else {
+                pim_stats.srf_reads++;
             }
-            // See if it's an SRF or GRF access within the PU
-            Addr pu_base = crf_range.end() + pu_idx * (srf_size + grf_size);
-            AddrRange pu_srf_range = AddrRange(pu_base, pu_base + srf_size);
-            AddrRange pu_grf_range =
-                AddrRange(pu_srf_range.end(), pu_srf_range.end() + grf_size);
-            if (pu_srf_range.contains(addr)) {
-                // Access SRF
-                int idx = (addr - pu_srf_range.start()) / 2;
-                uint16_t val = *(pkt->getConstPtr<uint16_t>());
-                if (pkt->isWrite()) {
-                    pim_stats.srf_writes++;
-                } else {
-                    pim_stats.srf_reads++;
-                }
-                if (idx < processing_units[pu_idx].srf_m.size()) {
-                    DPRINTF(
-                        PIM,
-                        "Access to SRF_M at index %d in PU %d with value %d\n",
-                        idx, pu_idx, val);
-                    for (int i = 0; i < simd_width; ++i) {
-                        processing_units[pu_idx].srf_m[idx][i] = val;
+            if (idx < srf_entries / 2) {
+                DPRINTF(
+                    PIM,
+                    "Access to SRF_M at index %d with value %d\n",
+                    idx, val);
+                if(all_bank_mode){
+                    for (int pu = 0; pu < processing_units.size(); ++pu) {
+                        for (int i = 0; i < simd_width; ++i) {
+                            processing_units[pu].srf_m[idx][i] = val;
+                        }
                     }
-                } else if (idx < processing_units[pu_idx].srf_m.size() +
-                                     processing_units[pu_idx].srf_a.size()) {
-                    idx -= processing_units[pu_idx].srf_m.size();
-                    DPRINTF(
-                        PIM,
-                        "Access to SRF_A at index %d in PU %d with value %d\n",
-                        idx, pu_idx, val);
-                    for (int i = 0; i < simd_width; ++i) {
-                        processing_units[pu_idx].srf_a[idx][i] = val;
-                    }
-                } else {
-                    panic("SRF index %d out of bounds for SRF size %d in PU "
-                          "%d\n",
-                          idx,
-                          processing_units[pu_idx].srf_m.size() +
-                              processing_units[pu_idx].srf_a.size(),
-                          pu_idx);
                 }
-            } else if (pu_grf_range.contains(addr)) {
-                // Access GRF
-                DPRINTF(PIM,
-                        "Access to GRF at address %#x not implemented yet\n",
-                        addr);
-                if (pkt->isWrite()) {
-                    pim_stats.grf_writes++;
-                } else {
-                    pim_stats.grf_reads++;
+                else{
+                    for (int i = 0; i < simd_width; ++i) {
+                        processing_units[0].srf_m[idx][i] = val;
+                    }
+                }
+            } else if (idx < srf_entries) {
+                idx -= srf_entries / 2;
+                DPRINTF(
+                    PIM,
+                    "Access to SRF_A at index %d with value %d\n",
+                    idx, val);
+                if(all_bank_mode){
+                    for (int pu = 0; pu < processing_units.size(); ++pu) {
+                        for (int i = 0; i < simd_width; ++i) {
+                            processing_units[pu].srf_a[idx][i] = val;
+                        }
+                    }
+                }
+                else{
+                    for (int i = 0; i < simd_width; ++i) {
+                        processing_units[0].srf_a[idx][i] = val;
+                    }
                 }
             } else {
-                panic(
-                    "Address %#x out of bounds for PU %d SRF and GRF ranges\n",
-                    addr, pu_idx);
+                panic("SRF index %d out of bounds\n",
+                        idx);
             }
         } else {
             // Address is not in PIM range, access normal DRAM
