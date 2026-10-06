@@ -1,0 +1,16 @@
+# Run with: python3 sim/runner.py experiments/conv.toml --run-id conv-baseline
+
+[experiment]
+name = "conv"
+
+[[runs]]
+mode = "pim"
+gem5_config = "sim/gem5_scripts/conv_acc.py"
+cases = [[16, 16], [32, 32], [64, 64]]
+environment = { CONV_H = "{rows}", CONV_W = "{cols}", CONV_C = "16", CONV_KH = "3", CONV_KW = "3", CONV_OC = "16", CONV_PRINT = "0" }
+
+[[runs]]
+mode = "openblas"
+gem5_config = "sim/gem5_scripts/openblas_fp16_sve_conv.py"
+cases = [[16, 16], [32, 32], [64, 64]]
+environment = { CONV_H = "{rows}", CONV_W = "{cols}", CONV_C = "16", CONV_KH = "3", CONV_KW = "3", CONV_OC = "16", CONV_PRINT = "0" }

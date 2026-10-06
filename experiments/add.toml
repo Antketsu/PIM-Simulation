@@ -1,0 +1,16 @@
+# Run with: python3 sim/runner.py experiments/add.toml --run-id add-baseline
+
+[experiment]
+name = "add"
+gem5_config = "sim/gem5_scripts/add_acc.py"
+
+[[runs]]
+mode = "pim"
+sizes = [128, 256, 512, 1024]
+environment = { ROWS = "{size}", COLS = "{size}", PRINT_RESULT = "0" }
+
+[[runs]]
+mode = "cpu_sve"
+gem5_config = "sim/gem5_scripts/add_cpu_sve.py"
+sizes = [128, 256, 512, 1024]
+environment = { ROWS = "{size}", COLS = "{size}", PRINT_RESULT = "0" }

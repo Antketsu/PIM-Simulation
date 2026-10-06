@@ -1,0 +1,27 @@
+# Representative LLaMA-3 linear layers.
+# Run with: python3 sim/runner.py experiments/gemm_real_values.toml --run-id gemm-real-values
+
+[experiment]
+name = "gemm_real_values"
+
+[[runs]]
+mode = "pim"
+gem5_config = "sim/gem5_scripts/mul_acc.py"
+cases = [
+    { name = "llama3_8b_attention_qkv", m = 4096, k = 4096, n = 6144 },
+    { name = "llama3_8b_mlp_up", m = 4096, k = 4096, n = 14336 },
+    { name = "llama3_8b_mlp_down", m = 4096, k = 14336, n = 4096 },
+    { name = "llama3_70b_mlp_up", m = 4096, k = 8192, n = 28672 },
+]
+environment = { M = "{m}", K = "{k}", N = "{n}", PRINT_RESULT = "0" }
+
+[[runs]]
+mode = "openblas"
+gem5_config = "sim/gem5_scripts/openblas_fp16_sve_gemm.py"
+cases = [
+    { name = "llama3_8b_attention_qkv", m = 4096, k = 4096, n = 6144 },
+    { name = "llama3_8b_mlp_up", m = 4096, k = 4096, n = 14336 },
+    { name = "llama3_8b_mlp_down", m = 4096, k = 14336, n = 4096 },
+    { name = "llama3_70b_mlp_up", m = 4096, k = 8192, n = 28672 },
+]
+environment = { M = "{m}", K = "{k}", N = "{n}", PRINT_RESULT = "0" }

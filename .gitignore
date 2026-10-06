@@ -1,1 +1,14 @@
-venv
+# Local Python environments and caches
+venv/
+**/venv/
+__pycache__/
+*.py[cod]
+
+# Newly generated experiment products
+/results/
+/kernels/build/
+
+# Local scratch output; historical tracked files remain tracked
+/temp/
+tests/test_out/20*
+**/simout.txt

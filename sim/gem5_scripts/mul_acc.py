@@ -1,0 +1,120 @@
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from env_params import int_env
+
+
+#from gem5.components.boards.x86_board import X86Board
+from gem5.components.boards.simple_board import SimpleBoard
+from gem5.components.cachehierarchies.classic.private_l1_shared_l2_cache_hierarchy import (
+    PrivateL1SharedL2CacheHierarchy
+)
+from gem5.components.cachehierarchies.classic.no_cache import NoCache
+from gem5.components.memory.single_channel import SingleChannelDDR4_2400
+from gem5.components.memory.hbm import HBM2Stack
+from gem5.components.processors.cpu_types import CPUTypes
+from gem5.components.processors.base_cpu_core import BaseCPUCore
+from gem5.components.processors.base_cpu_processor import BaseCPUProcessor
+from gem5.isas import ISA
+from gem5.resources.resource import obtain_resource
+from gem5.simulate.simulator import Simulator
+from gem5.resources.resource import Resource, DiskImageResource
+from gem5.simulate.exit_event import ExitEvent
+from gem5.components.boards.pim_board import PIMBoard
+from gem5.components.processors.simple_processor import SimpleProcessor
+from gem5.resources.resource import BinaryResource  
+from gem5.components.memory.pim import PIMAccelerator
+from m5.objects import ArmMinorCPU
+
+'''
+class WideMinorCPU(ArmMinorCPU):
+    fetch1FetchLimit = 4
+    decodeInputWidth = 4
+    executeInputWidth = 4
+    executeIssueLimit = 4
+    executeMemoryIssueLimit = 4
+    executeCommitLimit = 4
+    executeMemoryCommitLimit = 4
+    executeMaxAccessesInMemory = 8
+    executeLSQRequestsQueueSize = 8
+    executeLSQTransfersQueueSize = 8
+    executeLSQStoreBufferSize = 16
+    executeLSQMaxStoreBufferStoresPerCycle = 8
+'''
+class WideMinorCPU(ArmMinorCPU):
+    executeLSQRequestsQueueSize = 2
+
+def exit_handler():
+    process = processor.get_cores()[0].core.workload[0]
+    # VA, PA, Size, Cacheable
+    process.map(0x10000000, 0xC4000000, 0x1000000, False) # PIM region
+    print("Mapped memory region at VA 0x10000000 to PA 0xC4000000")
+
+    process.map(0x20000000, 0xD0000000, 0xFFFFFFF, False)
+
+    yield False
+    yield True
+
+
+cache_hierarchy = PrivateL1SharedL2CacheHierarchy(
+    l1d_size="32kB",
+    l1d_assoc=8,
+    l1i_size="32kB",
+    l1i_assoc=8,
+    l2_size="512kB",
+    l2_assoc=16,
+)
+
+# Setup the system memory.
+memory = SingleChannelDDR4_2400(size="3GB")
+
+processor = SimpleProcessor(num_cores=1,isa=ISA.ARM,cpu_type=CPUTypes.MINOR)
+'''
+processor = BaseCPUProcessor(
+    cores=[
+        BaseCPUCore(
+            core=WideMinorCPU(cpu_id=0),
+            isa=ISA.ARM,
+        )
+    ]
+)
+'''
+
+kernel_path = Path(__file__).resolve().parents[2] / "kernels" / "build" / "mul_pim"
+
+pim = PIMAccelerator(size="3GB")
+
+board = PIMBoard(
+    clk_freq="1GHz",
+    processor=processor,
+    memory=memory,
+    cache_hierarchy=cache_hierarchy,
+    pim=pim,
+)
+
+rows_a = int_env("M", minimum=1)
+rows_b = int_env("N", minimum=1)
+cols_b = int_env("K", minimum=1)
+print_result = int_env("PRINT_RESULT", minimum=0)
+
+board.set_se_binary_workload(
+    binary=BinaryResource(str(kernel_path)),
+    arguments=[str(rows_a),
+                str(rows_b),
+                str(cols_b),
+                str(print_result)
+                ])
+
+handler = exit_handler()
+
+simulator = Simulator(
+        board=board,
+        on_exit_event= {
+            ExitEvent.EXIT: handler,
+        }
+    )
+
+print(f"Running {kernel_path}")
+    
+simulator.run()

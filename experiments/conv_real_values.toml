@@ -1,0 +1,25 @@
+# ResNet-50 bottleneck stage at 56x56 spatial resolution.
+# Run with: python3 sim/runner.py experiments/conv_real_values.toml --run-id conv-real-values
+
+[experiment]
+name = "conv_real_values"
+
+[[runs]]
+mode = "pim"
+gem5_config = "sim/gem5_scripts/conv_acc.py"
+cases = [
+    { name = "step1_pointwise_compress", rows = 56, cols = 56, channels = 256, kernel_h = 1, kernel_w = 1, output_channels = 64 },
+    { name = "step2_spatial", rows = 56, cols = 56, channels = 64, kernel_h = 3, kernel_w = 3, output_channels = 64 },
+    { name = "step3_pointwise_restore", rows = 56, cols = 56, channels = 64, kernel_h = 1, kernel_w = 1, output_channels = 256 },
+]
+environment = { CONV_H = "{rows}", CONV_W = "{cols}", CONV_C = "{channels}", CONV_KH = "{kernel_h}", CONV_KW = "{kernel_w}", CONV_OC = "{output_channels}", CONV_PRINT = "0" }
+
+[[runs]]
+mode = "openblas"
+gem5_config = "sim/gem5_scripts/openblas_fp16_sve_conv.py"
+cases = [
+    { name = "step1_pointwise_compress", rows = 56, cols = 56, channels = 256, kernel_h = 1, kernel_w = 1, output_channels = 64 },
+    { name = "step2_spatial", rows = 56, cols = 56, channels = 64, kernel_h = 3, kernel_w = 3, output_channels = 64 },
+    { name = "step3_pointwise_restore", rows = 56, cols = 56, channels = 64, kernel_h = 1, kernel_w = 1, output_channels = 256 },
+]
+environment = { CONV_H = "{rows}", CONV_W = "{cols}", CONV_C = "{channels}", CONV_KH = "{kernel_h}", CONV_KW = "{kernel_w}", CONV_OC = "{output_channels}", CONV_PRINT = "0" }

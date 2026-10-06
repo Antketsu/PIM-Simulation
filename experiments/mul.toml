@@ -1,0 +1,16 @@
+# Run with: python3 sim/runner.py experiments/mul.toml --run-id mul-baseline
+
+[experiment]
+name = "mul"
+
+[[runs]]
+mode = "pim"
+gem5_config = "sim/gem5_scripts/mul_acc.py"
+sizes = [128, 256, 512, 1024]
+environment = { M = "{size}", N = "{size}", K = "{size}", PRINT_RESULT = "0" }
+
+[[runs]]
+mode = "openblas"
+gem5_config = "sim/gem5_scripts/openblas_fp16_sve_gemm.py"
+sizes = [128, 256, 512, 1024]
+environment = { M = "{size}", N = "{size}", K = "{size}" }
