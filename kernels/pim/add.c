@@ -75,7 +75,6 @@ int main(int argc, char *argv[]) {
     int16_t *A, *B, *C;
     init_operand(&A);
     B = (uintptr_t)A + (1 << 10);
-    m5_exit(0);
     C = fill_matrix(A, B, elems);
     m5_work_begin(0,0);
     add(A, B, C, elems);    

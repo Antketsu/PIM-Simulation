@@ -59,7 +59,6 @@ int main(int argc, char *argv[]) {
     A = malloc(rows_A * rows_B * sizeof(int16_t));
     init_operand(&C);
     B = (uintptr_t)C + (1 << 10);
-    m5_exit(0);
     fill_matrix(A, B, rows_A, rows_B, cols_B);
     m5_work_begin(0,0);
     matrix_multiplication(A, B, C, rows_A, rows_B, cols_B); 

@@ -12,3 +12,12 @@ __pycache__/
 /temp/
 tests/test_out/20*
 **/simout.txt
+#Checkpint
+cpt
+#Image builder
+busybox-image-builder/busybox
+busybox-image-builder/busybox*.tar.*
+busybox-image-builder/rootfs
+
+#m5out
+m5out/

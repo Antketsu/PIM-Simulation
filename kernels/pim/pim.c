@@ -1,5 +1,11 @@
 #include "pim.h"
 #include <stdatomic.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <fcntl.h>
+
 uint8_t *pim_region;
 uint32_t *crf;
 int16_t *srf;
@@ -12,6 +18,8 @@ uint64_t next_addr = 0x20000000;
 
 #define ROW_INCREMENT 0x00002000
 
+#define PIM_SIZE 0xC0000000 // 3GB
+
 #define SRF_ETNRIES 16
 
 #define GRF_ENTRIES 16
@@ -20,22 +28,10 @@ uint64_t next_addr = 0x20000000;
 
 #define PUs 8
 
-int init_operand(int16_t **op){ 
-    uint32_t ptr = next_addr;
+int fd; // File descriptor for /dev/pim
 
-    *op = mmap(
-                (void *)ptr,  
-                0xFFFFFFF,
-                PROT_READ | PROT_WRITE,
-                MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED,
-                -1,
-                0
-            );
-    if (*op == MAP_FAILED) {
-        perror("Mapping error \n");
-        return 1;
-    }
-
+int init_operand(int16_t **op){
+    *op = (int16_t * )(pim_region + 0x4000); // Offset to the operand region
     return 0;
 }
 
@@ -74,7 +70,6 @@ void add(int16_t* A, int16_t* B, int16_t* C, uint64_t elems){
     
     for(int e = 0; e < executions; ++e){
         pim_region[0] = 1; // Activate PIM mode
-        asm volatile ("dmb ish\n\t"); // Absolute hardware barrier
         for(int i = 0; i < loops; i += loops_per_row){
             for(int j = 0; j < loops_per_row; ++j){
                 for(int k = 0; k < regs; ++k){
@@ -192,20 +187,33 @@ int matrix_multiplication(int16_t* A, int16_t* B, int16_t* C, uint32_t A_rows, u
 
 
 int init_pim(){
-    pim_region = mmap(
-        (void *)0x10000000,  
-        pim_size,
-        PROT_READ | PROT_WRITE,
-        MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED,
-        -1,
-        0
-    );
-
-    if (pim_region == MAP_FAILED) {
-        perror("Error al mapear la región PIM");
+    fd = open("/dev/pim", O_RDWR);
+    if (fd < 0) {
+        perror("open /dev/pim");
         return 1;
     }
-    crf = (uint32_t *)(pim_region + 8); 
+
+    void *base = mmap((void *)0x700000000000, PIM_SIZE, PROT_READ | PROT_WRITE,
+                       MAP_SHARED | MAP_FIXED, fd, 0);
+    if (base == MAP_FAILED) {
+        perror("mmap");
+        close(fd);
+        return 1;
+    }
+    pim_region = (uint8_t *)base;
+    crf = (uint32_t *)(pim_region + 8);
     srf = (int16_t *)(crf + 32);
+    return 0;
+}
+
+int close_pim(){
+    if (munmap(pim_region, PIM_SIZE) == -1) {
+        perror("munmap");
+        return 1;
+    }
+    if (close(fd) == -1) {
+        perror("close");
+        return 1;
+    }
     return 0;
 }

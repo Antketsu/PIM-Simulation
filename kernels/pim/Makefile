@@ -1,7 +1,7 @@
 ROOT_DIR := $(abspath ../..)
 GEM5_PATH ?= $(ROOT_DIR)/gem5-pim
-ISA = arm64
-CC = aarch64-linux-gnu-gcc
+ISA = x86
+CC = gcc
 
 
 PIM_DIR := $(CURDIR)
@@ -9,6 +9,7 @@ BUILD_DIR := $(CURDIR)/../build
 
 
 CFLAGS = -g -I$(GEM5_PATH)/include -I$(PIM_DIR) -O3
+CFLAGS += -I$(GEM5_PATH)/util/m5/src
 LDFLAGS = -L$(GEM5_PATH)/util/m5/build/$(ISA)/out -static
 LDLIBS = -lm5
 

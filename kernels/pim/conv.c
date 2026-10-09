@@ -153,7 +153,6 @@ int main(int argc, char *argv[]) {
     }
     int16_t *columns_pim = (int16_t *)((uintptr_t)result + (1 << 10));
 
-    m5_exit(0);
     m5_work_begin(0, 0);
     im2col_to_pim_layout(input, columns_pim, height, width, channels,
                          kernel_h, kernel_w, padded_positions);

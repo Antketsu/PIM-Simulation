@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <gem5/m5ops.h>
+#include <m5_mmap.h>
 
 #define ELEMS_PER_ROW 512
 #define SIMD_WIDTH 16

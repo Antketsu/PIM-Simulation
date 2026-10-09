@@ -6,7 +6,7 @@ obj-m += $(DRIVER).o
 
 else
 PWD         ?= $(shell pwd)
-KVERSION    ?= $(shell uname -r)
+KVERSION    ?= 6.8.0-146-generic
 KMAKEDIR    ?= /lib/modules/$(KVERSION)/build
 MODLOADCONF ?= /etc/modules-load.d/$(GROUP).conf
 
